@@ -363,7 +363,7 @@ export default function App(){
       const ddHi=ddRaw.findIndex(r=>r.some(c=>c.includes("RAZÓN SOCIAL")));
       const ddH=ddHi>=0?ddRaw[ddHi]:[];
       const gi=(label)=>ddH.findIndex(h=>h.includes(label));
-      const ddMap={};
+      const ddByNit={},ddByName={};
       if(ddHi>=0){
         for(let i=ddHi+1;i<ddRaw.length;i++){
           const row=ddRaw[i];
@@ -378,20 +378,22 @@ export default function App(){
             razon_social:g("RAZÓN SOCIAL"),nit,sector:g("SECTOR"),
             rep_legal:g("REPRESENTANTE"),ingresos:g("INGRESOS"),
             tamano:g("TAMAÑO"),empleados:g("N° EMPLEADOS"),
-            tiene_web:g("TIENE"),url_web:g("URL"),
+            tiene_web:g("TIENE"),url_web:g("URL PÁGINA"),
             marca:g("REGISTRO"),
-            proc_rl:g("PROC. JUDICIALES\nRL")||g("RL"),
+            proc_rl:g("JUDICIALES\nRL"),
             proc_rl_sup:g("RL SUPLENTE"),
-            proc_empresa:g("EMPRESA"),
+            proc_empresa:g("JUDICIALES\nEMPRESA"),
             detalle_proc:g("DETALLE"),
-            estructura_juridica:g("ESTRUCTURA\nJURÍDICA")||g("JURÍDICA"),
+            estructura_juridica:g("JURÍDICA"),
             patrimonio:g("PATRIMONIO"),riesgos:g("RIESGOS"),
             puntaje,clasificacion:clasNorm,
           };
-          if(nit)ddMap[nit]=entry;
-          ddMap[nombre]=entry;
+          if(nit)ddByNit[nit]=entry;
+          ddByName[nombre]=entry;
         }
       }
+
+      const lookupDD=(n,nit)=>ddByNit[nit]||ddByName[n]||null;
 
       // ── Parse REUNIONES ──
       const reuRaw=parseRaw(reuT);
@@ -412,10 +414,10 @@ export default function App(){
       const enriched=bdRows.map((r,idx)=>{
         const nombre=(r["CLIENTE"]||"").toUpperCase().trim();
         const nit=cleanNIT(r["NIT"]||"");
-        // Match DD por NIT primero, luego nombre parcial
-        const dd=ddMap[nit]||ddMap[nombre]||Object.entries(ddMap).find(([k])=>k.length>5&&(nombre.includes(k.slice(0,8))||k.includes(nombre.slice(0,8))))?.[1]||null;
-        // Match reunión
-        const reu=reuMap[nombre]||Object.entries(reuMap).find(([k])=>k.length>5&&(nombre.includes(k.slice(0,8))||k.includes(nombre.slice(0,8))))?.[1]||null;
+        // Match DD — exact NIT or exact name only
+        const dd=lookupDD(nombre,nit);
+        // Match reunión — exact name only
+        const reu=reuMap[nombre]||null;
         return{
           id:idx,
           cliente:r["CLIENTE"]||"",
