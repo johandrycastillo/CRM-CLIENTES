@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
- 
+
 const SHEET_ID = "10QnaE3Bl99TgoyCy7kvz6yX39ESVh6QiUHcY-TtPq-c";
 const BD_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("BD PRINCIPAL CLIENT POTENCIALES")}`;
 const DD_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("DD CLIENTES POTENCIALES")}`;
 const REU_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("REUNIONES Y CIERRE")}`;
- 
+
 // ── CSV ──────────────────────────────────────────────────────────────────────
 function parseLine(line) {
   const r=[]; let c="",q=false;
@@ -35,7 +35,7 @@ function cleanNIT(x){
   const s=String(x).split(".")[0].replace(/[^0-9]/g,"");
   return s.slice(0,9);
 }
- 
+
 // ── STYLE ────────────────────────────────────────────────────────────────────
 const ESTADO_META={
   "LLAMAR HOY":        {bg:"#fef08a",color:"#713f12",icon:"📞"},
@@ -68,10 +68,10 @@ function procAlert(dd){
   );
   return bad;
 }
- 
+
 const ESTADOS=["TODOS","LLAMAR HOY","SEGUIMIENTO","VOLVER A CONTACTAR","YA NO SEGUIMIENTO","Sin estado"];
 const POTS=["TODOS","ALTO POTENCIAL","POTENCIAL MEDIO","BAJO POTENCIAL","DESCARTADO","Sin evaluar"];
- 
+
 // ── COMPONENTS ───────────────────────────────────────────────────────────────
 function Bdg({bg,color,children,style={}}){
   return <span style={{background:bg,color,borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:600,whiteSpace:"nowrap",...style}}>{children}</span>;
@@ -85,14 +85,14 @@ function KPI({label,value,color,sub}){
     </div>
   );
 }
- 
+
 // ── DETAIL PANEL ─────────────────────────────────────────────────────────────
 function Detail({c,onClose}){
   const em=ESTADO_META[c.estado]||ESTADO_META[""];
   const tag=getTag(c.interes);
   const pm=POT_META[c.clasificacion]||POT_META[""];
   const hasProc=procAlert(c.dd);
- 
+
   const Row=({icon,label,val,href,warn})=>{
     if(!val||val==="nan")return null;
     return(
@@ -104,7 +104,7 @@ function Detail({c,onClose}){
       </div>
     );
   };
- 
+
   const fmt=(n)=>{
     if(!n||n==="nan")return"";
     const num=parseFloat(n);
@@ -114,21 +114,21 @@ function Detail({c,onClose}){
     if(num>=1e6) return`$${(num/1e6).toFixed(0)}M`;
     return`$${num.toLocaleString("es-CO")}`;
   };
- 
+
   return(
     <div style={{width:330,background:"#fff",borderRadius:12,boxShadow:"0 2px 8px rgba(0,0,0,.1)",padding:20,flexShrink:0,position:"sticky",top:20,maxHeight:"88vh",overflowY:"auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
         <div style={{fontWeight:800,fontSize:14,lineHeight:1.3,flex:1}}>{c.cliente}</div>
         <button onClick={onClose} style={{border:"none",background:"none",cursor:"pointer",fontSize:20,color:"#9ca3af",marginLeft:8}}>×</button>
       </div>
- 
+
       {/* Badges fila 1 */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
         <Bdg bg={em.bg} color={em.color}>{em.icon} {c.estado||"Sin estado"}</Bdg>
         {tag&&<Bdg bg={tag.bg} color={tag.color}>{tag.label}</Bdg>}
         {c.tiene_reunion&&<Bdg bg="#dcfce7" color="#166534">🤝 Reunión</Bdg>}
       </div>
- 
+
       {/* Badges fila 2 — DD */}
       {c.dd&&(
         <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
@@ -138,7 +138,7 @@ function Detail({c,onClose}){
           {c.dd.tiene_web==="SÍ"&&<Bdg bg="#e0f2fe" color="#0369a1">🌐 Web</Bdg>}
         </div>
       )}
- 
+
       {/* Score bar */}
       {c.puntaje>0&&(
         <div style={{marginBottom:14}}>
@@ -151,7 +151,7 @@ function Detail({c,onClose}){
           </div>
         </div>
       )}
- 
+
       {/* DD info */}
       {c.dd&&(
         <div style={{background:"#f8fafc",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
@@ -169,7 +169,7 @@ function Detail({c,onClose}){
           <Row icon="⚠️" label="Riesgos micro" val={c.dd.riesgos}/>
         </div>
       )}
- 
+
       {/* Contacto */}
       <div style={{borderTop:"1px solid #f1f5f9",paddingTop:12,marginBottom:10}}>
         <div style={{fontSize:11,fontWeight:700,color:"#475569",marginBottom:8}}>📇 Contacto</div>
@@ -180,17 +180,17 @@ function Detail({c,onClose}){
         <Row icon="👔" label="Asignado a" val={c.quien}/>
         <Row icon="📅" label="Fecha" val={c.fecha&&c.fecha!=="nan"?c.fecha:null}/>
       </div>
- 
+
       {/* Novedades */}
       {c.quePaso&&<div style={{marginBottom:10}}><div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>📝 Último paso</div><div style={{background:"#f8fafc",borderRadius:8,padding:"9px 11px",fontSize:12,lineHeight:1.5}}>{c.quePaso}</div></div>}
       {c.notas&&c.notas.length>1&&<div style={{marginBottom:10}}><div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>🗒️ Notas</div><div style={{background:"#fffbeb",borderRadius:8,padding:"9px 11px",fontSize:12,lineHeight:1.5}}>{c.notas}</div></div>}
       {c.reunion_comentarios&&<div style={{marginBottom:10}}><div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>🤝 Reunión</div><div style={{background:"#f0fdf4",borderRadius:8,padding:"9px 11px",fontSize:12,lineHeight:1.5}}>{c.reunion_comentarios}</div></div>}
- 
+
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}}>
         {c.contacto1&&<Bdg bg="#d1fae5" color="#065f46">1er contacto ✓</Bdg>}
         {c.contacto2&&<Bdg bg="#dbeafe" color="#1e40af">2do contacto ✓</Bdg>}
       </div>
- 
+
       {(c.rues?.startsWith("http")||c.emis?.startsWith("http"))&&(
         <div style={{marginTop:12,paddingTop:12,borderTop:"1px solid #f1f5f9",display:"flex",gap:8,flexWrap:"wrap"}}>
           {c.rues?.startsWith("http")&&<a href={c.rues} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#7c3aed",background:"#ede9fe",borderRadius:6,padding:"4px 10px",textDecoration:"none",fontWeight:600}}>🔗 RUES</a>}
@@ -201,7 +201,7 @@ function Detail({c,onClose}){
     </div>
   );
 }
- 
+
 // ── MÉTRICAS ─────────────────────────────────────────────────────────────────
 const MONTHLY=[
   {mes:"Mar '26", c1:7,  c2:4,  reu:9},
@@ -212,7 +212,7 @@ const MONTHLY=[
 const SECTOR_DIST={"CONSTRUCTOR":6,"INMOBILIARIO":5,"SERVICIOS":5,"TECNOLOGÍA":4,"COMERCIAL":3,"TEXTIL":1,"HOTELERÍA":1};
 const SC={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
 const PC={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
- 
+
 function fmtM(n){
   if(!n||n==="nan")return"—";
   const v=parseFloat(n);if(isNaN(v))return"—";
@@ -221,7 +221,7 @@ function fmtM(n){
   if(v>=1e6)return`$${(v/1e6).toFixed(0)}M`;
   return`$${v.toLocaleString("es-CO")}`;
 }
- 
+
 // Horizontal bar chart — clean and readable
 function HBarChart({items, maxVal, colors}){
   return(
@@ -247,7 +247,7 @@ function HBarChart({items, maxVal, colors}){
     </div>
   );
 }
- 
+
 // Clean donut chart
 function Donut({data, colors, size=160}){
   const entries=Object.entries(data).filter(([,v])=>v>0);
@@ -289,7 +289,7 @@ function Donut({data, colors, size=160}){
     </div>
   );
 }
- 
+
 function Metricas({data}){
   const tot={
     empresas:data.length,
@@ -308,9 +308,9 @@ function Metricas({data}){
   const tf=tot.empresas?Math.round(tot.reu/tot.empresas*100):0;
   const ev=data.filter(r=>r.puntaje>0);
   const avg=ev.length?Math.round(ev.reduce((a,r)=>a+r.puntaje,0)/ev.length):0;
- 
+
   const potData={"Alto potencial":tot.alto,"Potencial medio":tot.medio,"Bajo potencial":tot.bajo,"Descartado":tot.desc};
- 
+
   // Conversion funnel data for horizontal bars
   const funnelItems=[
     {label:"Total BD",    value:tot.empresas, pct:100},
@@ -318,15 +318,15 @@ function Metricas({data}){
     {label:"2do contacto",value:tot.c2,       pct:tot.c1?Math.round(tot.c2/tot.c1*100):0},
     {label:"Con reunión", value:tot.reu,      pct:tr},
   ];
- 
+
   // Monthly grouped bar data — build as SVG
   const months=MONTHLY;
   const maxM=Math.max(...months.flatMap(m=>[m.c1,m.c2,m.reu]),1);
   const barW=36, gap=24, groupW=barW*3+gap;
- 
+
   return(
     <div style={{display:"flex",flexDirection:"column",gap:20}}>
- 
+
       {/* ── ROW 1: KPIs ── */}
       <div style={{background:"#fff",borderRadius:12,padding:24,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
         <div style={{fontWeight:800,fontSize:16,marginBottom:16,color:"#0f172a"}}>📊 Resumen General</div>
@@ -347,10 +347,10 @@ function Metricas({data}){
           ))}
         </div>
       </div>
- 
+
       {/* ── ROW 2: Funnel + Monthly ── */}
       <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
- 
+
         {/* Funnel embudo */}
         <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🔽 Embudo de Conversión</div>
@@ -364,7 +364,7 @@ function Metricas({data}){
             <span>Contacto→Reunión: <strong style={{color:"#22c55e"}}>{tr}%</strong></span>
           </div>
         </div>
- 
+
         {/* Monthly grouped bars — clean SVG */}
         <div style={{flex:"1 1 320px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>📅 Actividad Mensual</div>
@@ -406,10 +406,10 @@ function Metricas({data}){
           </div>
         </div>
       </div>
- 
+
       {/* ── ROW 3: Donuts ── */}
       <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
- 
+
         {/* Potencial */}
         <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:4}}>🎯 Distribución por Potencial</div>
@@ -426,7 +426,7 @@ function Metricas({data}){
             </div>
           </div>
         </div>
- 
+
         {/* Sector */}
         <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:4}}>🏭 Distribución por Sector</div>
@@ -441,7 +441,7 @@ function Metricas({data}){
           </div>
         </div>
       </div>
- 
+
       {/* ── ROW 4: Ranking ── */}
       <div style={{background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
         <div style={{fontWeight:800,fontSize:15,marginBottom:14,color:"#0f172a"}}>🔥 Ranking por Score — Empresas evaluadas en DD</div>
@@ -490,16 +490,16 @@ function Metricas({data}){
     </div>
   );
 }
- 
+
       const ddByName={"REFORMANTE S.A.S": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "CONSTRUCTOR", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES MASERCA S.A.S.": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "CONSTRUCTOR", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INGROSSO S.A.S.": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "CONSTRUCTOR", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "CONHOGAR S.A.S.": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "CONSTRUCTOR", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "BORNEO CAPITAL S.A.S.": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "HOTELERÍA", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "INVERSIONES PINAR DEL RODEO S.A.S": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "CONSTRUCTOR", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "CONSTRUCTOR", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MAVEBIENES S.A.S.": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIO", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CIRCULO INMOBILIARIA DEL SUR S.A.S.": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIO", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MASTER. IA": {"razon_social": "MASTER. IA", "nit": "", "sector": "TECNOLOGÍA", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "30", "tiene_web": "SÍ", "url_web": "https://master.la/politica-servicio", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "LLC en USA, revisar colombia", "estructura_juridica": "", "patrimonio": ">500 M", "riesgos": "", "puntaje": 27.0, "clasificacion": "BAJO POTENCIAL"}, "MONTACARGAS AM&M S.A.S.": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "SERVICIOS", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "LANGUAGE CENTERS NETWORK S.A.S.": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "SERVICIOS", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "ADA S.A.S.": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "TECNOLOGÍA", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GRUPO NUTRY S.A.S.": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "COMERCIAL", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "HMV INGENIEROS LTDA.": {"razon_social": "HMV INGENIEROS LTDA.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "SÍ", "url_web": "https://www.h-mv.com/General/Index.aspx?Lang=es-CO", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 10.0, "clasificacion": "DESCARTADO"}, "OFIMA S.A.S.": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "TECNOLOGÍA", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "OHANA COMPANY S.A.S. | GRUPO CUTRINI": {"razon_social": "OHANA COMPANY S.A.S. | GRUPO CUTRINI", "nit": "", "sector": "INMOBILIARIO", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "INVERSORA LIRIO S.A.S.": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "INMOBILIARIO", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CADENA COMERCIAL OXXO COLOMBIA S.A.S": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "SERVICIOS", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "INVERSIONES INTRAMAR S&P SAS": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "SERVICIOS", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "IMTAMAR S.A.S.": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "INMOBILIARIO", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "RESTCAFE S A S": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "SERVICIOS", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "BRAINFOODS S.A.S": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "COMERCIAL", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES LOS PERRITOS DEL MONO S.A.S.": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "COMERCIAL", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "AGUA BENDITA S.A.S": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "TEXTIL", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GESTION INMOBILIARIA MIC S.A.S.": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "RICHOUSE INMOBILIARIA SAS": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES BLO S.A.S": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "AUNA COLOMBIA S.A.S.": {"razon_social": "Auna Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GRUPO FALABELLA": {"razon_social": "Grupo Falabella", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "ZOOMLION HEAVY INDUSTRY COLOMBIA S.A.S.": {"razon_social": "Zoomlion Heavy Industry Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "COBRO | PEXTO COLOMBIA S.A.S": {"razon_social": "COBRO | PEXTO COLOMBIA S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GENESIS INVESTMENTS C.S.C S.A.S": {"razon_social": "GENESIS INVESTMENTS C.S.C S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "KONFIDETIA MULTI FAMILY OFFICE S.A.S": {"razon_social": "KONFIDETIA MULTI FAMILY OFFICE S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "EMPRESA TRANSPORTADORA SAN GABRIEL S.A.S.": {"razon_social": "Empresa Transportadora San Gabriel S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "REVOLUT BANK COLOMBIA S.A.": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "TECNOLOGÍA", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
       const ddByNit={"900782042": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "CONSTRUCTOR", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900707333": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "CONSTRUCTOR", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "900911752": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "CONSTRUCTOR", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "890900836": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "CONSTRUCTOR", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "901398785": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "HOTELERÍA", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "901183489": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "CONSTRUCTOR", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "900450388": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "CONSTRUCTOR", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "901546499": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIO", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "901555099": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIO", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "811014849": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "SERVICIOS", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "900430124": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "SERVICIOS", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "800167494": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "TECNOLOGÍA", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "901214227": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "COMERCIAL", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "800132302": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "TECNOLOGÍA", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "901497064": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "INMOBILIARIO", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900236520": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "SERVICIOS", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "901394202": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "SERVICIOS", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901529751": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "INMOBILIARIO", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "800213075": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "SERVICIOS", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901822717": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "COMERCIAL", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "901778642": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901637324": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "COMERCIAL", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "811044893": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "TEXTIL", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "900778625": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901554815": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "900009803": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901166382": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901875692": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "901875692", "sector": "", "rep_legal": "PEÑA PIÑEROS JORGE", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "902002134": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "TECNOLOGÍA", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
       const lookupDD=(nombre,nit)=>ddByNit[nit]||ddByName[nombre]||null;
       
- 
+
     </div>
   );
 }
- 
+
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 export default function App(){
   const [data,setData]=useState([]);
@@ -513,13 +513,13 @@ export default function App(){
   const [fPot,setFPot]=useState("TODOS");
   const [fQuien,setFQuien]=useState("TODOS");
   const [selected,setSelected]=useState(null);
- 
+
   const fetchData=async()=>{
     try{
       setLoading(true);setError(null);
       const [bdR,reuR]=await Promise.all([fetch(BD_URL),fetch(REU_URL)]);
       const [bdT,reuT]=await Promise.all([bdR.text(),reuR.text()]);
- 
+
       // ── DD data embedded from Excel (exact NIT or name match only) ──
       const ddByName={"REFORMANTE S.A.S": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES MASERCA S.A.S.": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INGROSSO S.A.S.": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "CONHOGAR S.A.S.": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "BORNEO CAPITAL S.A.S.": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "INVERSIONES PINAR DEL RODEO S.A.S": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MAVEBIENES S.A.S.": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CIRCULO INMOBILIARIA DEL SUR S.A.S.": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MASTER. IA": {"razon_social": "MASTER. IA", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "30", "tiene_web": "SÍ", "url_web": "https://master.la/politica-servicio", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "LLC en USA, revisar colombia", "estructura_juridica": "", "patrimonio": ">500 M", "riesgos": "", "puntaje": 27.0, "clasificacion": "BAJO POTENCIAL"}, "MONTACARGAS AM&M S.A.S.": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "LANGUAGE CENTERS NETWORK S.A.S.": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "ADA S.A.S.": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GRUPO NUTRY S.A.S.": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "HMV INGENIEROS LTDA.": {"razon_social": "HMV INGENIEROS LTDA.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "SÍ", "url_web": "https://www.h-mv.com/General/Index.aspx?Lang=es-CO", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 10.0, "clasificacion": "DESCARTADO"}, "OFIMA S.A.S.": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "OHANA COMPANY S.A.S. | GRUPO CUTRINI": {"razon_social": "OHANA COMPANY S.A.S. | GRUPO CUTRINI", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "INVERSORA LIRIO S.A.S.": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CADENA COMERCIAL OXXO COLOMBIA S.A.S": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "INVERSIONES INTRAMAR S&P SAS": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "IMTAMAR S.A.S.": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "RESTCAFE S A S": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "BRAINFOODS S.A.S": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES LOS PERRITOS DEL MONO S.A.S.": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "AGUA BENDITA S.A.S": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GESTION INMOBILIARIA MIC S.A.S.": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "RICHOUSE INMOBILIARIA SAS": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES BLO S.A.S": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "AUNA COLOMBIA S.A.S.": {"razon_social": "Auna Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GRUPO FALABELLA": {"razon_social": "Grupo Falabella", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "ZOOMLION HEAVY INDUSTRY COLOMBIA S.A.S.": {"razon_social": "Zoomlion Heavy Industry Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "COBRO | PEXTO COLOMBIA S.A.S": {"razon_social": "COBRO | PEXTO COLOMBIA S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GENESIS INVESTMENTS C.S.C S.A.S": {"razon_social": "GENESIS INVESTMENTS C.S.C S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "KONFIDETIA MULTI FAMILY OFFICE S.A.S": {"razon_social": "KONFIDETIA MULTI FAMILY OFFICE S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "EMPRESA TRANSPORTADORA SAN GABRIEL S.A.S.": {"razon_social": "Empresa Transportadora San Gabriel S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "REVOLUT BANK COLOMBIA S.A.": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "FINTECH / BANCO", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
       const ddByNit={"900782042": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900707333": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "900911752": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "890900836": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "901398785": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "901183489": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "900450388": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "901546499": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "901555099": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "811014849": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "900430124": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "800167494": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "901214227": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "800132302": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "901497064": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900236520": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "901394202": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901529751": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "800213075": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901822717": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "901778642": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901637324": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "811044893": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "900778625": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901554815": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "900009803": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901166382": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901875692": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "901875692", "sector": "", "rep_legal": "PEÑA PIÑEROS JORGE", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "902002134": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "FINTECH / BANCO", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
@@ -527,15 +527,17 @@ export default function App(){
       
       // ── Parse REUNIONES — match por NIT (si existe) o nombre exacto ──
       const reuRaw=parseRaw(reuT);
-      const reuHi=reuRaw.findIndex(r=>r.includes("CLIENTE")&&(r.includes("REUNION")||r.includes("REUNIÓN")));
+      // Find header row: must have both CLIENTE and REUNION as separate cells
+      const reuHi=reuRaw.findIndex(r=>r.some(c=>c.trim()==="CLIENTE")&&r.some(c=>c.trim()==="REUNION"||c.trim()==="REUNIÓN"));
       const reuByNit={}, reuByName={};
       if(reuHi>=0){
         const rH=reuRaw[reuHi];
-        const ci=rH.indexOf("CLIENTE");
-        const ni=rH.findIndex(h=>h.trim().toUpperCase()==="NIT"); // columna NIT
-        const ri=rH.findIndex(h=>h==="REUNION"||h==="REUNIÓN");
-        const fi=rH.indexOf("FECHA");
-        const coi=rH.indexOf("COMENTARIOS");
+        const ci=rH.findIndex(h=>h.trim()==="CLIENTE");
+        const ni=rH.findIndex(h=>h.trim().toUpperCase()==="NIT");
+        const ri=rH.findIndex(h=>h.trim()==="REUNION"||h.trim()==="REUNIÓN");
+        const fi=rH.findIndex(h=>h.trim()==="FECHA");
+        const coi=rH.findIndex(h=>h.trim()==="COMENTARIOS");
+        const esti=rH.findIndex(h=>h.trim()==="ESTADO");
         for(let i=reuHi+1;i<reuRaw.length;i++){
           const row=reuRaw[i];
           const nombre=(row[ci]||"").toUpperCase().trim();
@@ -546,6 +548,7 @@ export default function App(){
             tiene_reunion:["TRUE","VERDADERO","1","SI","SÍ"].includes((row[ri]||"").toUpperCase().trim()),
             fecha:row[fi]||"",
             comentarios:row[coi]||"",
+            estado:esti>=0?(row[esti]||""):"",
           };
           // Guardar por NIT (exacto) y por nombre (exacto)
           if(nit) reuByNit[nit]=entry;
@@ -553,7 +556,7 @@ export default function App(){
         }
       }
       const lookupReu=(nombre,nit)=>reuByNit[nit]||reuByName[nombre]||null;
- 
+
       // ── Parse BD ──
       const bdRows=parseCSV(bdT).filter(r=>r["CLIENTE"]?.length>1);
       const enriched=bdRows.map((r,idx)=>{
@@ -570,8 +573,8 @@ export default function App(){
           quien:r["QUIEN LO LLAMO"]||"",
           emis:r["EMIS"]||"",rues:r["RUES"]||"",
           interes:r["COMENTARIOS"]||"",
-          contacto1:r["CONTACTÓ"]==="TRUE",
-          contacto2:r["SEGUNDO CONTACTO"]==="TRUE",
+          contacto1:["TRUE","VERDADERO","1"].includes((r["CONTACTÓ"]||"").toUpperCase().trim()),
+          contacto2:["TRUE","VERDADERO","1"].includes((r["SEGUNDO CONTACTO"]||"").toUpperCase().trim()),
           quePaso:r["¿QUÉ PASÓ?"]||"",
           fecha:r["FECHA"]||"",
           contactoDirecto:r["CONTACTO DIRECTO"]||"",
@@ -589,7 +592,7 @@ export default function App(){
           reunion_comentarios:reu?.comentarios||"",
         };
       });
- 
+
       // Sort: ALTO POTENCIAL primero, luego por score desc, luego por estado (LLAMAR HOY primero)
       const estadoOrder={"LLAMAR HOY":1,"SEGUIMIENTO":2,"VOLVER A CONTACTAR":3,"":4,"YA NO SEGUIMIENTO":5};
       enriched.sort((a,b)=>{
@@ -598,22 +601,22 @@ export default function App(){
         if(b.puntaje!==a.puntaje)return b.puntaje-a.puntaje;
         return (estadoOrder[a.estado]||4)-(estadoOrder[b.estado]||4);
       });
- 
-      const reuList=Object.values(reuMap);
+
+      const reuList=Object.values(reuByName);
       setData(enriched);setReuniones(reuList);
       setLastUpdate(new Date().toLocaleTimeString("es-CO"));
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
   };
- 
+
   useEffect(()=>{fetchData();},[]);
- 
+
   const quienes=useMemo(()=>{
     const s=new Set(["TODOS"]);
     data.forEach(r=>{if(r.quien)r.quien.split(",").forEach(q=>s.add(q.trim()));});
     return[...s].filter(Boolean);
   },[data]);
- 
+
   const filtered=useMemo(()=>data.filter(r=>{
     const q=search.toLowerCase();
     const mS=!q||r.cliente.toLowerCase().includes(q)||r.contactoDirecto.toLowerCase().includes(q)||r.telefono.includes(q)||r.quePaso.toLowerCase().includes(q);
@@ -622,7 +625,7 @@ export default function App(){
     const mP=fPot==="TODOS"||(fPot==="Sin evaluar"?!r.clasificacion:r.clasificacion===fPot);
     return mS&&mE&&mQ&&mP;
   }),[data,search,fEstado,fQuien,fPot]);
- 
+
   const stats=useMemo(()=>({
     total:data.length,
     llamarHoy:data.filter(r=>r.estado==="LLAMAR HOY").length,
@@ -631,7 +634,7 @@ export default function App(){
     conReunion:data.filter(r=>r.tiene_reunion).length,
     conProc:data.filter(r=>r.dd&&procAlert(r.dd)).length,
   }),[data]);
- 
+
   if(loading)return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",gap:16,color:"#475569"}}>
       <div style={{fontSize:40}}>📋</div>
@@ -647,7 +650,7 @@ export default function App(){
       <button onClick={fetchData} style={{padding:"10px 20px",background:"#3b82f6",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontWeight:600}}>Reintentar</button>
     </div>
   );
- 
+
   return(
     <div style={{minHeight:"100vh",background:"#f8fafc",color:"#1e293b"}}>
       {/* HEADER */}
@@ -668,7 +671,7 @@ export default function App(){
           <button onClick={fetchData} style={{padding:"8px 14px",background:"#1e40af",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}}>🔄 Actualizar</button>
         </div>
       </div>
- 
+
       <div style={{padding:"20px 28px"}}>
         {tab==="metricas"?<Metricas data={data}/>:(
           <>
@@ -681,7 +684,7 @@ export default function App(){
               <KPI label="🤝 Con reunión"  value={stats.conReunion}   color="#8b5cf6"/>
               <KPI label="⚠️ Proc. legal"  value={stats.conProc}     color="#ef4444"/>
             </div>
- 
+
             {/* FILTROS */}
             <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
               <input placeholder="🔍 Buscar empresa, contacto, acción…" value={search} onChange={e=>setSearch(e.target.value)}
@@ -702,7 +705,7 @@ export default function App(){
                 {filtered.length} resultado{filtered.length!==1?"s":""}
               </div>
             </div>
- 
+
             <div style={{display:"flex",gap:20,alignItems:"flex-start"}}>
               {/* TABLA */}
               <div style={{flex:1,background:"#fff",borderRadius:12,boxShadow:"0 1px 4px rgba(0,0,0,.07)",overflow:"hidden",minWidth:0}}>
@@ -764,7 +767,7 @@ export default function App(){
               </div>
               {selected&&<Detail c={selected} onClose={()=>setSelected(null)}/>}
             </div>
- 
+
             <div style={{marginTop:14,fontSize:11,color:"#9ca3af",textAlign:"center"}}>
               Las empresas con DD aparecen primero, ordenadas por score · Edita Google Sheets y presiona "Actualizar"
             </div>
