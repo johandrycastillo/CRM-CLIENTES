@@ -30,8 +30,10 @@ function parseRaw(text){
   return text.split("\n").map(l=>parseLine(l.trim()).map(c=>c.replace(/^"|"$/g,"").trim())).filter(r=>r.length>1);
 }
 function cleanNIT(x){
-  if(!x||x==="nan")return"";
-  return x.replace(/[^0-9]/g,"").slice(0,9);
+  if(!x||x==="nan"||x==="0")return"";
+  // Handle both string and float format (901214227 or 901214227.0)
+  const s=String(x).split(".")[0].replace(/[^0-9]/g,"");
+  return s.slice(0,9);
 }
 
 // ── STYLE ────────────────────────────────────────────────────────────────────
@@ -530,7 +532,7 @@ export default function App(){
       if(reuHi>=0){
         const rH=reuRaw[reuHi];
         const ci=rH.indexOf("CLIENTE");
-        const ni=rH.indexOf("NIT");           // columna NIT (si existe en la hoja)
+        const ni=rH.findIndex(h=>h.trim().toUpperCase()==="NIT"); // columna NIT
         const ri=rH.findIndex(h=>h==="REUNION"||h==="REUNIÓN");
         const fi=rH.indexOf("FECHA");
         const coi=rH.indexOf("COMENTARIOS");
@@ -541,7 +543,7 @@ export default function App(){
           const nitRaw=ni>=0?(row[ni]||""):"";
           const nit=cleanNIT(nitRaw);
           const entry={
-            tiene_reunion:(row[ri]||"").toUpperCase()==="TRUE",
+            tiene_reunion:["TRUE","VERDADERO","1","SI","SÍ"].includes((row[ri]||"").toUpperCase().trim()),
             fecha:row[fi]||"",
             comentarios:row[coi]||"",
           };
