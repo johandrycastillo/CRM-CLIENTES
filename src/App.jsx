@@ -201,53 +201,86 @@ function Detail({c,onClose}){
 }
 
 // ── MÉTRICAS ─────────────────────────────────────────────────────────────────
-const MONTHLY_DATA=[{"mes":"2026-03","empresas":7,"contacto1":7,"contacto2":4,"reuniones":9},{"mes":"2026-04","empresas":6,"contacto1":3,"contacto2":1,"reuniones":14},{"mes":"2026-05","empresas":20,"contacto1":15,"contacto2":5,"reuniones":1},{"mes":"2026-06","empresas":18,"contacto1":5,"contacto2":4,"reuniones":0}];
-const SECTOR_DATA={"CONSTRUCTOR":6,"HOTELERÍA":1,"INMOBILIARIO":5,"TECNOLOGÍA":4,"SERVICIOS":5,"COMERCIAL":3,"TEXTIL":1};
-const SECTOR_COLORS={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
-const MESES={"01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun","07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic"};
-const POT_COLORS={"ALTO POTENCIAL":"#22c55e","POTENCIAL MEDIO":"#f59e0b","BAJO POTENCIAL":"#ef4444","DESCARTADO":"#9ca3af"};
+const MONTHLY=[
+  {mes:"Mar '26", c1:7,  c2:4,  reu:9},
+  {mes:"Abr '26", c1:3,  c2:1,  reu:14},
+  {mes:"May '26", c1:15, c2:5,  reu:1},
+  {mes:"Jun '26", c1:5,  c2:4,  reu:0},
+];
+const SECTOR_DIST={"CONSTRUCTOR":6,"INMOBILIARIO":5,"SERVICIOS":5,"TECNOLOGÍA":4,"COMERCIAL":3,"TEXTIL":1,"HOTELERÍA":1};
+const SC={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
+const PC={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
 
-function DonutChart({dataObj, colors, size=180}){
-  const entries = Object.entries(dataObj).filter(([,v])=>v>0);
-  const total = entries.reduce((a,[,v])=>a+v,0);
-  if(!total) return <div style={{color:"#9ca3af",fontSize:13,padding:16}}>Sin datos</div>;
+function fmtM(n){
+  if(!n||n==="nan")return"—";
+  const v=parseFloat(n);if(isNaN(v))return"—";
+  if(v>=1e12)return`$${(v/1e12).toFixed(0)}B`;
+  if(v>=1e9)return`$${(v/1e9).toFixed(1)}MM`;
+  if(v>=1e6)return`$${(v/1e6).toFixed(0)}M`;
+  return`$${v.toLocaleString("es-CO")}`;
+}
+
+// Horizontal bar chart — clean and readable
+function HBarChart({items, maxVal, colors}){
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {items.map((item,i)=>(
+        <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:90,fontSize:12,color:"#374151",fontWeight:600,textAlign:"right",flexShrink:0}}>{item.label}</div>
+          <div style={{flex:1,height:22,background:"#f1f5f9",borderRadius:6,overflow:"hidden",position:"relative"}}>
+            <div style={{
+              width:`${Math.max(2,Math.round(item.value/maxVal*100))}%`,
+              height:"100%",
+              background:colors[i]||"#6366f1",
+              borderRadius:6,
+              transition:"width 0.4s ease",
+              display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:6,
+            }}>
+              {item.value/maxVal > 0.15 && <span style={{fontSize:11,color:"#fff",fontWeight:700}}>{item.value}</span>}
+            </div>
+            {item.value/maxVal <= 0.15 && <span style={{position:"absolute",left:`${Math.max(2,Math.round(item.value/maxVal*100))+1}%`,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"#374151",fontWeight:700}}>{item.value}</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Clean donut chart
+function Donut({data, colors, size=160}){
+  const entries=Object.entries(data).filter(([,v])=>v>0);
+  const total=entries.reduce((a,[,v])=>a+v,0);
+  if(!total)return<div style={{color:"#9ca3af",fontSize:13,padding:16}}>Sin datos</div>;
   let cum=0;
-  const slices = entries.map(([label,val])=>{
-    const pct=val/total; const start=cum; cum+=pct;
-    return {label,val,pct,start};
-  });
-  const r=size/2-18, ir=r-26, cx=size/2, cy=size/2;
-  function arc(s){
-    if(s.pct>=0.9999){ // full circle — draw as two halves
-      return `M ${cx},${cy-r} A ${r},${r} 0 1,1 ${cx-0.01},${cy-r} Z`;
-    }
-    const a1=s.start*2*Math.PI-Math.PI/2;
-    const a2=(s.start+s.pct)*2*Math.PI-Math.PI/2;
+  const slices=entries.map(([label,val])=>{const pct=val/total;const s=cum;cum+=pct;return{label,val,pct,s};});
+  const r=size/2-14,ir=r-22,cx=size/2,cy=size/2;
+  function arc({s,pct}){
+    if(pct>=0.9999){return`M ${cx},${cy-r} A ${r},${r} 0 1,1 ${cx-0.01},${cy-r} Z`;}
+    const a1=s*2*Math.PI-Math.PI/2,a2=(s+pct)*2*Math.PI-Math.PI/2;
     const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
     const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
     const ix1=cx+ir*Math.cos(a1),iy1=cy+ir*Math.sin(a1);
     const ix2=cx+ir*Math.cos(a2),iy2=cy+ir*Math.sin(a2);
-    const lg=s.pct>0.5?1:0;
-    return `M ${x1},${y1} A ${r},${r} 0 ${lg},1 ${x2},${y2} L ${ix2},${iy2} A ${ir},${ir} 0 ${lg},0 ${ix1},${iy1} Z`;
+    return`M ${x1},${y1} A ${r},${r} 0 ${pct>0.5?1:0},1 ${x2},${y2} L ${ix2},${iy2} A ${ir},${ir} 0 ${pct>0.5?1:0},0 ${ix1},${iy1} Z`;
   }
   return(
     <div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{flexShrink:0}}>
         {slices.map((s,i)=>(
           <path key={i} d={arc(s)} fill={colors[s.label]||"#94a3b8"} stroke="#fff" strokeWidth={2}>
             <title>{`${s.label}: ${s.val} (${Math.round(s.pct*100)}%)`}</title>
           </path>
         ))}
-        <text x={cx} y={cy-5} textAnchor="middle" fontSize={20} fontWeight="800" fill="#1e293b">{total}</text>
-        <text x={cx} y={cy+12} textAnchor="middle" fontSize={9} fill="#6b7280">total</text>
+        <text x={cx} y={cy-4} textAnchor="middle" fontSize={20} fontWeight="800" fill="#1e293b">{total}</text>
+        <text x={cx} y={cy+13} textAnchor="middle" fontSize={9} fill="#6b7280">evaluadas</text>
       </svg>
-      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      <div style={{display:"flex",flexDirection:"column",gap:6,flex:1}}>
         {slices.map((s,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:7,fontSize:12}}>
-            <div style={{width:11,height:11,borderRadius:3,background:colors[s.label]||"#94a3b8",flexShrink:0}}/>
-            <span style={{color:"#374151"}}>{s.label}</span>
-            <span style={{fontWeight:700,color:"#1e293b",marginLeft:4}}>{s.val}</span>
-            <span style={{color:"#9ca3af",fontSize:11}}>({Math.round(s.pct*100)}%)</span>
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,fontSize:12}}>
+            <div style={{width:10,height:10,borderRadius:2,background:colors[s.label]||"#94a3b8",flexShrink:0}}/>
+            <span style={{color:"#374151",flex:1}}>{s.label}</span>
+            <span style={{fontWeight:700,color:"#1e293b"}}>{s.val}</span>
+            <span style={{color:"#9ca3af",fontSize:11,width:36,textAlign:"right"}}>({Math.round(s.pct*100)}%)</span>
           </div>
         ))}
       </div>
@@ -256,144 +289,165 @@ function DonutChart({dataObj, colors, size=180}){
 }
 
 function Metricas({data}){
-  const byMonth = MONTHLY_DATA;
-  const sectors = SECTOR_DATA;
-
   const tot={
-    empresas: data.length,
-    contacto1: data.filter(r=>r.contacto1).length,
-    contacto2: data.filter(r=>r.contacto2).length,
-    reuniones: byMonth.reduce((a,m)=>a+m.reuniones,0),
-    alto:      data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
-    medio:     data.filter(r=>r.clasificacion==="POTENCIAL MEDIO").length,
-    bajo:      data.filter(r=>r.clasificacion==="BAJO POTENCIAL").length,
-    descartado:data.filter(r=>r.clasificacion==="DESCARTADO").length,
-    conProc:   data.filter(r=>r.dd&&procAlert(r.dd)).length,
-    conMarca:  data.filter(r=>r.dd&&r.dd.marca==="SÍ").length,
+    empresas:data.length,
+    c1:data.filter(r=>r.contacto1).length,
+    c2:data.filter(r=>r.contacto2).length,
+    reu:MONTHLY.reduce((a,m)=>a+m.reu,0),
+    alto:data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
+    medio:data.filter(r=>r.clasificacion==="POTENCIAL MEDIO").length,
+    bajo:data.filter(r=>r.clasificacion==="BAJO POTENCIAL").length,
+    desc:data.filter(r=>r.clasificacion==="DESCARTADO").length,
+    conProc:data.filter(r=>r.dd&&procAlert(r.dd)).length,
+    conMarca:data.filter(r=>r.dd&&r.dd.marca==="SÍ").length,
   };
-  const tc = tot.empresas  ? Math.round(tot.contacto1/tot.empresas*100)  : 0;
-  const tr = tot.contacto1 ? Math.round(tot.reuniones/tot.contacto1*100) : 0;
-  const tf = tot.empresas  ? Math.round(tot.reuniones/tot.empresas*100)  : 0;
+  const tc=tot.empresas?Math.round(tot.c1/tot.empresas*100):0;
+  const tr=tot.c1?Math.round(tot.reu/tot.c1*100):0;
+  const tf=tot.empresas?Math.round(tot.reu/tot.empresas*100):0;
+  const ev=data.filter(r=>r.puntaje>0);
+  const avg=ev.length?Math.round(ev.reduce((a,r)=>a+r.puntaje,0)/ev.length):0;
 
-  const potData={
-    "Alto potencial":  tot.alto,
-    "Potencial medio": tot.medio,
-    "Bajo potencial":  tot.bajo,
-    "Descartado":      tot.descartado,
-  };
-  const potColors={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
+  const potData={"Alto potencial":tot.alto,"Potencial medio":tot.medio,"Bajo potencial":tot.bajo,"Descartado":tot.desc};
 
-  const evaluated = data.filter(r=>r.puntaje>0);
-  const avgScore  = evaluated.length ? Math.round(evaluated.reduce((a,r)=>a+r.puntaje,0)/evaluated.length) : 0;
-  const maxV = Math.max(...byMonth.map(m=>Math.max(m.empresas,m.reuniones,1)));
+  // Conversion funnel data for horizontal bars
+  const funnelItems=[
+    {label:"Total BD",    value:tot.empresas, pct:100},
+    {label:"1er contacto",value:tot.c1,       pct:tc},
+    {label:"2do contacto",value:tot.c2,       pct:tot.c1?Math.round(tot.c2/tot.c1*100):0},
+    {label:"Con reunión", value:tot.reu,      pct:tr},
+  ];
 
-  const fmtI=(n)=>{
-    if(!n||n==="nan") return "—";
-    const v=parseFloat(n); if(isNaN(v)) return "—";
-    if(v>=1e12) return `$${(v/1e12).toFixed(0)} Billones`;
-    if(v>=1e9)  return `$${(v/1e9).toFixed(1)} MM`;
-    if(v>=1e6)  return `$${(v/1e6).toFixed(0)} M`;
-    return `$${v.toLocaleString("es-CO")}`;
-  };
+  // Monthly grouped bar data — build as SVG
+  const months=MONTHLY;
+  const maxM=Math.max(...months.flatMap(m=>[m.c1,m.c2,m.reu]),1);
+  const barW=36, gap=24, groupW=barW*3+gap;
 
   return(
-    <div>
-      {/* ── KPIs ── */}
-      <div style={{background:"#fff",borderRadius:12,padding:24,boxShadow:"0 1px 4px rgba(0,0,0,.07)",marginBottom:20}}>
-        <div style={{fontWeight:800,fontSize:16,marginBottom:16,color:"#0f172a"}}>📊 Métricas de Conversión</div>
-        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
-          <KPI label="Total BD"          value={tot.empresas}   color="#6366f1"/>
-          <KPI label="1er contacto"      value={tot.contacto1}  color="#3b82f6" sub={`${tc}% tasa contacto`}/>
-          <KPI label="2do contacto"      value={tot.contacto2}  color="#8b5cf6" sub={`${tot.contacto1?Math.round(tot.contacto2/tot.contacto1*100):0}% de contactadas`}/>
-          <KPI label="Con reunión"       value={tot.reuniones}  color="#22c55e" sub={`${tr}% de contactadas`}/>
-          <KPI label="Llamada → Reunión" value={`${tf}%`}       color="#f59e0b" sub="tasa cierre global"/>
-          <KPI label="⚠️ Proc. legal"   value={tot.conProc}    color="#ef4444"/>
-          <KPI label="™ Marca reg."     value={tot.conMarca}   color="#7c3aed"/>
-        </div>
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
 
-        {/* ── Funnel ── */}
-        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:24}}>
+      {/* ── ROW 1: KPIs ── */}
+      <div style={{background:"#fff",borderRadius:12,padding:24,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+        <div style={{fontWeight:800,fontSize:16,marginBottom:16,color:"#0f172a"}}>📊 Resumen General</div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
           {[
-            {label:"BD Total",    val:tot.empresas,  color:"#6366f1",bg:"#eef2ff",pct:null},
-            {label:"1er contacto",val:tot.contacto1, color:"#3b82f6",bg:"#eff6ff",pct:tc},
-            {label:"2do contacto",val:tot.contacto2, color:"#8b5cf6",bg:"#f5f3ff",pct:tot.contacto1?Math.round(tot.contacto2/tot.contacto1*100):0},
-            {label:"Con reunión", val:tot.reuniones, color:"#22c55e",bg:"#f0fdf4",pct:tr},
-          ].map((s,i)=>(
-            <div key={s.label} style={{display:"flex",alignItems:"center"}}>
-              <div style={{background:s.bg,borderRadius:10,padding:"12px 16px",textAlign:"center",border:`2px solid ${s.color}`,minWidth:90}}>
-                <div style={{fontSize:26,fontWeight:800,color:s.color}}>{s.val}</div>
-                <div style={{fontSize:11,color:"#6b7280",marginTop:1}}>{s.label}</div>
-                {s.pct!==null&&<div style={{fontSize:11,color:s.color,fontWeight:700,marginTop:3}}>{s.pct}%</div>}
-              </div>
-              {i<3&&<div style={{fontSize:20,color:"#d1d5db",margin:"0 6px"}}>→</div>}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Bar chart by month ── */}
-        <div style={{fontWeight:700,fontSize:14,color:"#374151",marginBottom:12}}>📅 Actividad mensual</div>
-        <div style={{display:"flex",gap:14,alignItems:"flex-end",overflowX:"auto",paddingBottom:8}}>
-          {byMonth.map(m=>{
-            const mes=m.mes.slice(5,7), año=m.mes.slice(2,4);
-            return(
-              <div key={m.mes} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:64}}>
-                <div style={{fontSize:11,color:"#374151",fontWeight:700}}>{m.empresas}</div>
-                <div style={{width:52,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                  <div style={{width:48,height:Math.max(4,Math.round(m.empresas/maxV*110)),background:"#c7d2fe",borderRadius:"4px 4px 0 0"}} title={`Empresas: ${m.empresas}`}/>
-                  <div style={{width:38,height:Math.max(2,Math.round(m.contacto1/maxV*110)),background:"#3b82f6",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`1er contacto: ${m.contacto1}`}/>
-                  <div style={{width:28,height:Math.max(2,Math.round(m.contacto2/maxV*110)),background:"#8b5cf6",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`2do contacto: ${m.contacto2}`}/>
-                  <div style={{width:18,height:Math.max(2,Math.round(m.reuniones/maxV*110)),background:"#22c55e",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`Reuniones: ${m.reuniones}`}/>
-                </div>
-                <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>{MESES[mes]||mes}</div>
-                <div style={{fontSize:10,color:"#9ca3af"}}>'{año}</div>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{display:"flex",gap:14,marginTop:10,flexWrap:"wrap"}}>
-          {[["#c7d2fe","Empresas"],["#3b82f6","1er contacto"],["#8b5cf6","2do contacto"],["#22c55e","Reuniones"]].map(([c,l])=>(
-            <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#6b7280"}}>
-              <div style={{width:10,height:10,background:c,borderRadius:2}}/>{l}
+            {label:"Total empresas",   val:tot.empresas, color:"#6366f1"},
+            {label:"1er contacto",     val:`${tot.c1} (${tc}%)`, color:"#3b82f6"},
+            {label:"2do contacto",     val:`${tot.c2}`,  color:"#8b5cf6"},
+            {label:"Con reunión",      val:`${tot.reu} (${tr}%)`, color:"#22c55e"},
+            {label:"Cierre global",    val:`${tf}%`,     color:"#f59e0b"},
+            {label:"⚠️ Proc. legal",  val:tot.conProc,  color:"#ef4444"},
+            {label:"™ Marca reg.",    val:tot.conMarca, color:"#7c3aed"},
+          ].map(k=>(
+            <div key={k.label} style={{background:"#f8fafc",borderRadius:10,padding:"12px 16px",borderLeft:`4px solid ${k.color}`,minWidth:100}}>
+              <div style={{fontSize:22,fontWeight:800,color:k.color}}>{k.val}</div>
+              <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{k.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Donuts row ── */}
-      <div style={{display:"flex",gap:20,flexWrap:"wrap",marginBottom:20}}>
+      {/* ── ROW 2: Funnel + Monthly ── */}
+      <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+
+        {/* Funnel embudo */}
+        <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🔽 Embudo de Conversión</div>
+          <HBarChart
+            items={funnelItems}
+            maxVal={tot.empresas}
+            colors={["#6366f1","#3b82f6","#8b5cf6","#22c55e"]}
+          />
+          <div style={{marginTop:16,display:"flex",gap:16,fontSize:11,color:"#6b7280"}}>
+            <span>📞→🤝 Tasa cierre: <strong style={{color:"#f59e0b"}}>{tf}%</strong></span>
+            <span>Contacto→Reunión: <strong style={{color:"#22c55e"}}>{tr}%</strong></span>
+          </div>
+        </div>
+
+        {/* Monthly grouped bars — clean SVG */}
+        <div style={{flex:"1 1 320px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>📅 Actividad Mensual</div>
+          <svg width="100%" viewBox={`0 0 ${months.length*(groupW+20)+20} 160`} style={{overflow:"visible"}}>
+            {months.map((m,gi)=>{
+              const gx=20+gi*(groupW+20);
+              const bars=[
+                {val:m.c1,  color:"#3b82f6",label:"1er C"},
+                {val:m.c2,  color:"#8b5cf6",label:"2do C"},
+                {val:m.reu, color:"#22c55e",label:"Reu"},
+              ];
+              return(
+                <g key={gi}>
+                  {bars.map((b,bi)=>{
+                    const bh=Math.max(4,Math.round(b.val/maxM*110));
+                    const bx=gx+bi*(barW+2);
+                    const by=130-bh;
+                    return(
+                      <g key={bi}>
+                        <rect x={bx} y={by} width={barW} height={bh} fill={b.color} rx={4}>
+                          <title>{`${m.mes} — ${b.label}: ${b.val}`}</title>
+                        </rect>
+                        {b.val>0&&<text x={bx+barW/2} y={by-4} textAnchor="middle" fontSize={10} fill="#374151" fontWeight="700">{b.val}</text>}
+                      </g>
+                    );
+                  })}
+                  <text x={gx+groupW/2-gap/2} y={148} textAnchor="middle" fontSize={12} fill="#374151" fontWeight="700">{m.mes.slice(0,3)}</text>
+                  <text x={gx+groupW/2-gap/2} y={160} textAnchor="middle" fontSize={10} fill="#9ca3af">{m.mes.slice(4)}</text>
+                </g>
+              );
+            })}
+          </svg>
+          <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap"}}>
+            {[["#3b82f6","1er contacto"],["#8b5cf6","2do contacto"],["#22c55e","Reuniones"]].map(([c,l])=>(
+              <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#6b7280"}}>
+                <div style={{width:10,height:10,background:c,borderRadius:2}}/>{l}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── ROW 3: Donuts ── */}
+      <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+
         {/* Potencial */}
-        <div style={{flex:1,minWidth:300,background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
-          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🎯 Distribución por Potencial</div>
-          <DonutChart dataObj={potData} colors={potColors} size={180}/>
-          <div style={{marginTop:16,padding:"12px",background:"#f8fafc",borderRadius:8}}>
-            <div style={{fontSize:11,color:"#6b7280",marginBottom:3}}>Score promedio DD</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#6366f1"}}>{avgScore || "—"}</div>
-            <div style={{fontSize:11,color:"#9ca3af"}}>sobre 100 · {evaluated.length} empresa{evaluated.length!==1?"s":""} evaluada{evaluated.length!==1?"s":""}</div>
+        <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:4}}>🎯 Distribución por Potencial</div>
+          <div style={{fontSize:11,color:"#6b7280",marginBottom:14}}>Según evaluación de Debida Diligencia</div>
+          <Donut data={potData} colors={PC} size={160}/>
+          <div style={{marginTop:16,background:"#f8fafc",borderRadius:8,padding:"10px 14px",display:"flex",gap:20}}>
+            <div>
+              <div style={{fontSize:11,color:"#6b7280"}}>Score promedio</div>
+              <div style={{fontSize:22,fontWeight:800,color:"#6366f1"}}>{avg||"—"}<span style={{fontSize:12,color:"#9ca3af"}}>/100</span></div>
+            </div>
+            <div>
+              <div style={{fontSize:11,color:"#6b7280"}}>Evaluadas en DD</div>
+              <div style={{fontSize:22,fontWeight:800,color:"#374151"}}>{ev.length}</div>
+            </div>
           </div>
         </div>
 
         {/* Sector */}
-        <div style={{flex:1,minWidth:300,background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
-          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🏭 Distribución por Sector</div>
-          <DonutChart dataObj={sectors} colors={SECTOR_COLORS} size={180}/>
-          <div style={{marginTop:16,padding:"12px",background:"#f8fafc",borderRadius:8}}>
-            <div style={{fontSize:11,color:"#6b7280",marginBottom:3}}>Sector dominante — enfocar campañas</div>
-            <div style={{fontSize:16,fontWeight:800,color:SECTOR_COLORS[Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[0]]||"#374151"}}>
-              {Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[0]||"—"}
+        <div style={{flex:"1 1 300px",background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:4}}>🏭 Distribución por Sector</div>
+          <div style={{fontSize:11,color:"#6b7280",marginBottom:14}}>Para enfocar campañas de prospección</div>
+          <Donut data={SECTOR_DIST} colors={SC} size={160}/>
+          <div style={{marginTop:16,background:"#f8fafc",borderRadius:8,padding:"10px 14px"}}>
+            <div style={{fontSize:11,color:"#6b7280",marginBottom:2}}>Sector prioritario — enfocar aquí</div>
+            <div style={{fontSize:16,fontWeight:800,color:SC[Object.entries(SECTOR_DIST).sort((a,b)=>b[1]-a[1])[0][0]]||"#374151"}}>
+              {Object.entries(SECTOR_DIST).sort((a,b)=>b[1]-a[1])[0][0]}
             </div>
-            <div style={{fontSize:11,color:"#9ca3af"}}>{Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[1]||0} empresas en este sector</div>
+            <div style={{fontSize:11,color:"#9ca3af"}}>{Object.entries(SECTOR_DIST).sort((a,b)=>b[1]-a[1])[0][1]} empresas evaluadas</div>
           </div>
         </div>
       </div>
 
-      {/* ── Ranking DD ── */}
+      {/* ── ROW 4: Ranking ── */}
       <div style={{background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
-        <div style={{fontWeight:800,fontSize:15,marginBottom:14,color:"#0f172a"}}>🔥 Ranking por Score — Empresas con Debida Diligencia</div>
+        <div style={{fontWeight:800,fontSize:15,marginBottom:14,color:"#0f172a"}}>🔥 Ranking por Score — Empresas evaluadas en DD</div>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead>
               <tr style={{background:"#f8fafc",borderBottom:"2px solid #e2e8f0"}}>
-                {["#","Score","Empresa","Clasificación","Sector","Ingresos","Tamaño","Proc.Legal","Marca","Estado CRM"].map(h=>(
+                {["#","Score","Empresa","Clasificación","Sector","Ingresos","Tamaño","Proc.Legal","Marca","CRM"].map(h=>(
                   <th key={h} style={{padding:"8px 12px",textAlign:"left",fontWeight:600,color:"#475569",fontSize:12,whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
@@ -403,23 +457,27 @@ function Metricas({data}){
                 const pm=POT_META[r.clasificacion]||POT_META[""];
                 const em=ESTADO_META[r.estado]||ESTADO_META[""];
                 const hp=procAlert(r.dd);
-                const sc=SECTOR_COLORS[r.dd.sector||""]||"#e5e7eb";
+                const sc=SC[r.dd.sector]||null;
                 return(
-                  <tr key={r.id} style={{borderBottom:"1px solid #f1f5f9"}}>
-                    <td style={{padding:"8px 12px",color:"#9ca3af",fontSize:12}}>{i+1}</td>
-                    <td style={{padding:"8px 12px",fontWeight:800,fontSize:15,color:r.puntaje>=70?"#166534":r.puntaje>=50?"#854d0e":"#991b1b"}}>{r.puntaje}</td>
-                    <td style={{padding:"8px 12px",fontWeight:600,maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente}</td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}><Bdg bg={pm.bg} color={pm.color}>{pm.icon} {r.clasificacion}</Bdg></td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
-                      {r.dd.sector
+                  <tr key={r.id} style={{borderBottom:"1px solid #f1f5f9",background:i<3?"#fefce8":"transparent"}}>
+                    <td style={{padding:"8px 10px",color:i<3?"#854d0e":"#9ca3af",fontWeight:i<3?800:400,fontSize:12}}>{i+1}</td>
+                    <td style={{padding:"8px 10px"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{width:34,height:34,borderRadius:8,background:r.puntaje>=70?"#dcfce7":r.puntaje>=50?"#fef9c3":"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,color:r.puntaje>=70?"#166534":r.puntaje>=50?"#854d0e":"#991b1b"}}>{r.puntaje}</div>
+                      </div>
+                    </td>
+                    <td style={{padding:"8px 10px",fontWeight:600,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente}</td>
+                    <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}><Bdg bg={pm.bg} color={pm.color}>{pm.icon} {r.clasificacion}</Bdg></td>
+                    <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>
+                      {sc
                         ? <span style={{background:sc,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{r.dd.sector}</span>
                         : <span style={{color:"#d1d5db"}}>—</span>}
                     </td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmtI(r.dd.ingresos)}</td>
-                    <td style={{padding:"8px 12px"}}>{r.dd.tamano||"—"}</td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{hp?<span style={{color:"#dc2626",fontWeight:700}}>⚠️ SÍ</span>:<span style={{color:"#16a34a"}}>✅ No</span>}</td>
-                    <td style={{padding:"8px 12px"}}>{r.dd.marca==="SÍ"?<span style={{color:"#7c3aed",fontWeight:700}}>™ Sí</span>:"No"}</td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}><Bdg bg={em.bg} color={em.color}>{em.icon} {r.estado||"—"}</Bdg></td>
+                    <td style={{padding:"8px 10px",whiteSpace:"nowrap",fontWeight:600}}>{fmtM(r.dd.ingresos)}</td>
+                    <td style={{padding:"8px 10px"}}>{r.dd.tamano||"—"}</td>
+                    <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>{hp?<span style={{color:"#dc2626",fontWeight:700}}>⚠️ SÍ</span>:<span style={{color:"#16a34a",fontSize:12}}>✅ No</span>}</td>
+                    <td style={{padding:"8px 10px"}}>{r.dd.marca==="SÍ"?<span style={{color:"#7c3aed",fontWeight:700}}>™ Sí</span>:<span style={{color:"#9ca3af",fontSize:11}}>No</span>}</td>
+                    <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}><Bdg bg={em.bg} color={em.color}>{em.icon} {r.estado||"—"}</Bdg></td>
                   </tr>
                 );
               })}
@@ -427,6 +485,15 @@ function Metricas({data}){
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+      const ddByName={"REFORMANTE S.A.S": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES MASERCA S.A.S.": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INGROSSO S.A.S.": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "CONHOGAR S.A.S.": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "BORNEO CAPITAL S.A.S.": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "INVERSIONES PINAR DEL RODEO S.A.S": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MAVEBIENES S.A.S.": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CIRCULO INMOBILIARIA DEL SUR S.A.S.": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "MASTER. IA": {"razon_social": "MASTER. IA", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "30", "tiene_web": "SÍ", "url_web": "https://master.la/politica-servicio", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "LLC en USA, revisar colombia", "estructura_juridica": "", "patrimonio": ">500 M", "riesgos": "", "puntaje": 27.0, "clasificacion": "BAJO POTENCIAL"}, "MONTACARGAS AM&M S.A.S.": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "LANGUAGE CENTERS NETWORK S.A.S.": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "ADA S.A.S.": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GRUPO NUTRY S.A.S.": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "HMV INGENIEROS LTDA.": {"razon_social": "HMV INGENIEROS LTDA.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "SÍ", "url_web": "https://www.h-mv.com/General/Index.aspx?Lang=es-CO", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 10.0, "clasificacion": "DESCARTADO"}, "OFIMA S.A.S.": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "OHANA COMPANY S.A.S. | GRUPO CUTRINI": {"razon_social": "OHANA COMPANY S.A.S. | GRUPO CUTRINI", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "INVERSORA LIRIO S.A.S.": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "CADENA COMERCIAL OXXO COLOMBIA S.A.S": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "INVERSIONES INTRAMAR S&P SAS": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "IMTAMAR S.A.S.": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "RESTCAFE S A S": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "BRAINFOODS S.A.S": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES LOS PERRITOS DEL MONO S.A.S.": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "AGUA BENDITA S.A.S": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "GESTION INMOBILIARIA MIC S.A.S.": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "RICHOUSE INMOBILIARIA SAS": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "INVERSIONES BLO S.A.S": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "AUNA COLOMBIA S.A.S.": {"razon_social": "Auna Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GRUPO FALABELLA": {"razon_social": "Grupo Falabella", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "ZOOMLION HEAVY INDUSTRY COLOMBIA S.A.S.": {"razon_social": "Zoomlion Heavy Industry Colombia S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "COBRO | PEXTO COLOMBIA S.A.S": {"razon_social": "COBRO | PEXTO COLOMBIA S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "GENESIS INVESTMENTS C.S.C S.A.S": {"razon_social": "GENESIS INVESTMENTS C.S.C S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "KONFIDETIA MULTI FAMILY OFFICE S.A.S": {"razon_social": "KONFIDETIA MULTI FAMILY OFFICE S.A.S", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "EMPRESA TRANSPORTADORA SAN GABRIEL S.A.S.": {"razon_social": "Empresa Transportadora San Gabriel S.A.S.", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "", "sector": "", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "REVOLUT BANK COLOMBIA S.A.": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "FINTECH / BANCO", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
+      const ddByNit={"900782042": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900707333": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "900911752": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "890900836": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "901398785": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "901183489": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "900450388": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "901546499": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "901555099": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "811014849": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "900430124": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "800167494": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "901214227": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "800132302": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "901497064": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900236520": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "901394202": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901529751": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "800213075": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901822717": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "901778642": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901637324": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "811044893": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "900778625": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901554815": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "900009803": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901166382": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901875692": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "901875692", "sector": "", "rep_legal": "PEÑA PIÑEROS JORGE", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "902002134": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "FINTECH / BANCO", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
+      const lookupDD=(nombre,nit)=>ddByNit[nit]||ddByName[nombre]||null;
+      
+
     </div>
   );
 }
@@ -586,7 +653,7 @@ export default function App(){
       </div>
 
       <div style={{padding:"20px 28px"}}>
-        {tab==="metricas"?<Metricas data={data} reuniones={reuniones}/>:(
+        {tab==="metricas"?<Metricas data={data}/>:(
           <>
             {/* STATS */}
             <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
@@ -626,7 +693,7 @@ export default function App(){
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
                     <thead>
                       <tr style={{background:"#f8fafc",borderBottom:"2px solid #e2e8f0"}}>
-                        {["Score","Potencial","Estado","Empresa","Contacto","Teléfono","Proc.Legal","Marca","Interés","🤝","Asignado"].map(h=>(
+                        {["Score","Potencial","Estado","Empresa","Sector","Contacto","Teléfono","Interés","🤝","Asignado"].map(h=>(
                           <th key={h} style={{padding:"10px 11px",textAlign:"left",fontWeight:600,color:"#475569",whiteSpace:"nowrap",fontSize:12}}>{h}</th>
                         ))}
                       </tr>
@@ -637,6 +704,7 @@ export default function App(){
                         const tag=getTag(r.interes);
                         const pm=POT_META[r.clasificacion]||null;
                         const hp=r.dd&&procAlert(r.dd);
+                        const sColor=SC[r.dd?.sector||""]||null;
                         const isSel=selected?.id===r.id;
                         return(
                           <tr key={r.id} onClick={()=>setSelected(isSel?null:r)}
@@ -657,11 +725,10 @@ export default function App(){
                             <td style={{padding:"9px 11px",whiteSpace:"nowrap"}}>
                               {r.telefono?<a href={`tel:${r.telefono.split("|")[0].replace(/\s/g,"")}`} style={{color:"#3b82f6",textDecoration:"none"}} onClick={e=>e.stopPropagation()}>{r.telefono.slice(0,14)}</a>:<span style={{color:"#d1d5db"}}>—</span>}
                             </td>
-                            <td style={{padding:"9px 11px",textAlign:"center"}}>
-                              {r.dd?(hp?<span title="Tiene procesos legales" style={{color:"#dc2626",fontWeight:700}}>⚠️</span>:<span style={{color:"#16a34a"}}>✅</span>):<span style={{color:"#d1d5db"}}>—</span>}
-                            </td>
-                            <td style={{padding:"9px 11px",textAlign:"center"}}>
-                              {r.dd?(r.dd.marca==="SÍ"?<span style={{color:"#7c3aed",fontWeight:700}}>™</span>:<span style={{color:"#9ca3af",fontSize:11}}>No</span>):<span style={{color:"#d1d5db"}}>—</span>}
+                            <td style={{padding:"9px 11px",whiteSpace:"nowrap"}}>
+                              {secColor
+                                ? <span style={{background:secColor,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{r.dd.sector}</span>
+                                : <span style={{color:"#d1d5db",fontSize:11}}>—</span>}
                             </td>
                             <td style={{padding:"9px 11px"}}>
                               {tag?<Bdg bg={tag.bg} color={tag.color}>{tag.label}</Bdg>:<span style={{color:"#d1d5db"}}>—</span>}
