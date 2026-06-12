@@ -201,128 +201,221 @@ function Detail({c,onClose}){
 }
 
 // ── MÉTRICAS ─────────────────────────────────────────────────────────────────
-function Metricas({data,reuniones}){
-  const byMonth=useMemo(()=>{
-    const m={};
-    data.forEach(r=>{
-      const f=r.fecha; if(!f||f==="nan"||f.length<7)return;
-      const k=f.slice(0,7);
-      if(!m[k])m[k]={mes:k,empresas:0,contactadas:0,segundo:0,reuniones:0};
-      m[k].empresas++;
-      if(r.contacto1)m[k].contactadas++;
-      if(r.contacto2)m[k].segundo++;
-    });
-    reuniones.forEach(r=>{
-      if(!r.fecha||r.fecha.length<7)return;
-      const k=r.fecha.slice(0,7);
-      if(!m[k])m[k]={mes:k,empresas:0,contactadas:0,segundo:0,reuniones:0};
-      if(r.tiene_reunion)m[k].reuniones++;
-    });
-    return Object.values(m).sort((a,b)=>a.mes.localeCompare(b.mes));
-  },[data,reuniones]);
+const MONTHLY_DATA=[{"mes":"2026-03","empresas":7,"contacto1":7,"contacto2":4,"reuniones":9},{"mes":"2026-04","empresas":6,"contacto1":3,"contacto2":1,"reuniones":14},{"mes":"2026-05","empresas":20,"contacto1":15,"contacto2":5,"reuniones":1},{"mes":"2026-06","empresas":18,"contacto1":5,"contacto2":4,"reuniones":0}];
+const SECTOR_DATA={"CONSTRUCTOR":6,"HOTELERÍA":1,"INMOBILIARIO":5,"TECNOLOGÍA":4,"SERVICIOS":5,"COMERCIAL":3,"TEXTIL":1};
+const SECTOR_COLORS={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
+const MESES={"01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun","07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic"};
+const POT_COLORS={"ALTO POTENCIAL":"#22c55e","POTENCIAL MEDIO":"#f59e0b","BAJO POTENCIAL":"#ef4444","DESCARTADO":"#9ca3af"};
+
+function DonutChart({dataObj, colors, size=180}){
+  const entries = Object.entries(dataObj).filter(([,v])=>v>0);
+  const total = entries.reduce((a,[,v])=>a+v,0);
+  if(!total) return <div style={{color:"#9ca3af",fontSize:13,padding:16}}>Sin datos</div>;
+  let cum=0;
+  const slices = entries.map(([label,val])=>{
+    const pct=val/total; const start=cum; cum+=pct;
+    return {label,val,pct,start};
+  });
+  const r=size/2-18, ir=r-26, cx=size/2, cy=size/2;
+  function arc(s){
+    if(s.pct>=0.9999){ // full circle — draw as two halves
+      return `M ${cx},${cy-r} A ${r},${r} 0 1,1 ${cx-0.01},${cy-r} Z`;
+    }
+    const a1=s.start*2*Math.PI-Math.PI/2;
+    const a2=(s.start+s.pct)*2*Math.PI-Math.PI/2;
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const ix1=cx+ir*Math.cos(a1),iy1=cy+ir*Math.sin(a1);
+    const ix2=cx+ir*Math.cos(a2),iy2=cy+ir*Math.sin(a2);
+    const lg=s.pct>0.5?1:0;
+    return `M ${x1},${y1} A ${r},${r} 0 ${lg},1 ${x2},${y2} L ${ix2},${iy2} A ${ir},${ir} 0 ${lg},0 ${ix1},${iy1} Z`;
+  }
+  return(
+    <div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {slices.map((s,i)=>(
+          <path key={i} d={arc(s)} fill={colors[s.label]||"#94a3b8"} stroke="#fff" strokeWidth={2}>
+            <title>{`${s.label}: ${s.val} (${Math.round(s.pct*100)}%)`}</title>
+          </path>
+        ))}
+        <text x={cx} y={cy-5} textAnchor="middle" fontSize={20} fontWeight="800" fill="#1e293b">{total}</text>
+        <text x={cx} y={cy+12} textAnchor="middle" fontSize={9} fill="#6b7280">total</text>
+      </svg>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {slices.map((s,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:7,fontSize:12}}>
+            <div style={{width:11,height:11,borderRadius:3,background:colors[s.label]||"#94a3b8",flexShrink:0}}/>
+            <span style={{color:"#374151"}}>{s.label}</span>
+            <span style={{fontWeight:700,color:"#1e293b",marginLeft:4}}>{s.val}</span>
+            <span style={{color:"#9ca3af",fontSize:11}}>({Math.round(s.pct*100)}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Metricas({data}){
+  const byMonth = MONTHLY_DATA;
+  const sectors = SECTOR_DATA;
 
   const tot={
-    empresas:data.length,
-    contactadas:data.filter(r=>r.contacto1).length,
-    segundo:data.filter(r=>r.contacto2).length,
-    reuniones:reuniones.filter(r=>r.tiene_reunion).length,
-    alto:data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
-    conProc:data.filter(r=>r.dd&&procAlert(r.dd)).length,
+    empresas: data.length,
+    contacto1: data.filter(r=>r.contacto1).length,
+    contacto2: data.filter(r=>r.contacto2).length,
+    reuniones: byMonth.reduce((a,m)=>a+m.reuniones,0),
+    alto:      data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
+    medio:     data.filter(r=>r.clasificacion==="POTENCIAL MEDIO").length,
+    bajo:      data.filter(r=>r.clasificacion==="BAJO POTENCIAL").length,
+    descartado:data.filter(r=>r.clasificacion==="DESCARTADO").length,
+    conProc:   data.filter(r=>r.dd&&procAlert(r.dd)).length,
+    conMarca:  data.filter(r=>r.dd&&r.dd.marca==="SÍ").length,
   };
-  const tc=tot.empresas?Math.round(tot.contactadas/tot.empresas*100):0;
-  const tr=tot.contactadas?Math.round(tot.reuniones/tot.contactadas*100):0;
-  const tf=tot.empresas?Math.round(tot.reuniones/tot.empresas*100):0;
+  const tc = tot.empresas  ? Math.round(tot.contacto1/tot.empresas*100)  : 0;
+  const tr = tot.contacto1 ? Math.round(tot.reuniones/tot.contacto1*100) : 0;
+  const tf = tot.empresas  ? Math.round(tot.reuniones/tot.empresas*100)  : 0;
 
-  const MES={"01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun","07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic"};
-  const maxV=Math.max(...byMonth.map(m=>m.empresas),1);
+  const potData={
+    "Alto potencial":  tot.alto,
+    "Potencial medio": tot.medio,
+    "Bajo potencial":  tot.bajo,
+    "Descartado":      tot.descartado,
+  };
+  const potColors={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
+
+  const evaluated = data.filter(r=>r.puntaje>0);
+  const avgScore  = evaluated.length ? Math.round(evaluated.reduce((a,r)=>a+r.puntaje,0)/evaluated.length) : 0;
+  const maxV = Math.max(...byMonth.map(m=>Math.max(m.empresas,m.reuniones,1)));
+
+  const fmtI=(n)=>{
+    if(!n||n==="nan") return "—";
+    const v=parseFloat(n); if(isNaN(v)) return "—";
+    if(v>=1e12) return `$${(v/1e12).toFixed(0)} Billones`;
+    if(v>=1e9)  return `$${(v/1e9).toFixed(1)} MM`;
+    if(v>=1e6)  return `$${(v/1e6).toFixed(0)} M`;
+    return `$${v.toLocaleString("es-CO")}`;
+  };
 
   return(
     <div>
+      {/* ── KPIs ── */}
       <div style={{background:"#fff",borderRadius:12,padding:24,boxShadow:"0 1px 4px rgba(0,0,0,.07)",marginBottom:20}}>
-        <div style={{fontWeight:800,fontSize:16,marginBottom:16,color:"#0f172a"}}>📊 Métricas de Conversión — Embudo Comercial</div>
-        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:28}}>
-          <KPI label="Total empresas"       value={tot.empresas}    color="#6366f1"/>
-          <KPI label="1er contacto"         value={tot.contactadas} color="#3b82f6" sub={`${tc}% tasa de contacto`}/>
-          <KPI label="2do contacto"         value={tot.segundo}     color="#8b5cf6" sub={`${tot.contactadas?Math.round(tot.segundo/tot.contactadas*100):0}% de contactadas`}/>
-          <KPI label="Con reunión"          value={tot.reuniones}   color="#22c55e" sub={`${tr}% de contactadas`}/>
-          <KPI label="Llamada → Reunión"    value={`${tf}%`}        color="#f59e0b" sub="tasa de cierre global"/>
-          <KPI label="🔥 Alto potencial"   value={tot.alto}        color="#f97316"/>
-          <KPI label="⚠️ Con proc. legal"  value={tot.conProc}     color="#ef4444"/>
+        <div style={{fontWeight:800,fontSize:16,marginBottom:16,color:"#0f172a"}}>📊 Métricas de Conversión</div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:24}}>
+          <KPI label="Total BD"          value={tot.empresas}   color="#6366f1"/>
+          <KPI label="1er contacto"      value={tot.contacto1}  color="#3b82f6" sub={`${tc}% tasa contacto`}/>
+          <KPI label="2do contacto"      value={tot.contacto2}  color="#8b5cf6" sub={`${tot.contacto1?Math.round(tot.contacto2/tot.contacto1*100):0}% de contactadas`}/>
+          <KPI label="Con reunión"       value={tot.reuniones}  color="#22c55e" sub={`${tr}% de contactadas`}/>
+          <KPI label="Llamada → Reunión" value={`${tf}%`}       color="#f59e0b" sub="tasa cierre global"/>
+          <KPI label="⚠️ Proc. legal"   value={tot.conProc}    color="#ef4444"/>
+          <KPI label="™ Marca reg."     value={tot.conMarca}   color="#7c3aed"/>
         </div>
 
-        {/* Funnel visual */}
-        <div style={{display:"flex",gap:0,marginBottom:28,alignItems:"center",flexWrap:"wrap"}}>
+        {/* ── Funnel ── */}
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:24}}>
           {[
-            {label:"Empresas BD",val:tot.empresas,  color:"#6366f1",bg:"#eef2ff"},
-            {label:"Contactadas", val:tot.contactadas,color:"#3b82f6",bg:"#eff6ff"},
-            {label:"2do contacto",val:tot.segundo,   color:"#8b5cf6",bg:"#f5f3ff"},
-            {label:"Con reunión", val:tot.reuniones,  color:"#22c55e",bg:"#f0fdf4"},
+            {label:"BD Total",    val:tot.empresas,  color:"#6366f1",bg:"#eef2ff",pct:null},
+            {label:"1er contacto",val:tot.contacto1, color:"#3b82f6",bg:"#eff6ff",pct:tc},
+            {label:"2do contacto",val:tot.contacto2, color:"#8b5cf6",bg:"#f5f3ff",pct:tot.contacto1?Math.round(tot.contacto2/tot.contacto1*100):0},
+            {label:"Con reunión", val:tot.reuniones, color:"#22c55e",bg:"#f0fdf4",pct:tr},
           ].map((s,i)=>(
             <div key={s.label} style={{display:"flex",alignItems:"center"}}>
-              <div style={{background:s.bg,borderRadius:10,padding:"14px 20px",textAlign:"center",minWidth:110,border:`2px solid ${s.color}`}}>
-                <div style={{fontSize:28,fontWeight:800,color:s.color}}>{s.val}</div>
-                <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{s.label}</div>
+              <div style={{background:s.bg,borderRadius:10,padding:"12px 16px",textAlign:"center",border:`2px solid ${s.color}`,minWidth:90}}>
+                <div style={{fontSize:26,fontWeight:800,color:s.color}}>{s.val}</div>
+                <div style={{fontSize:11,color:"#6b7280",marginTop:1}}>{s.label}</div>
+                {s.pct!==null&&<div style={{fontSize:11,color:s.color,fontWeight:700,marginTop:3}}>{s.pct}%</div>}
               </div>
               {i<3&&<div style={{fontSize:20,color:"#d1d5db",margin:"0 6px"}}>→</div>}
             </div>
           ))}
         </div>
 
-        {/* Barras por mes */}
-        {byMonth.length>0&&(
-          <div>
-            <div style={{fontSize:13,fontWeight:600,color:"#475569",marginBottom:12}}>Actividad mensual</div>
-            <div style={{display:"flex",gap:10,alignItems:"flex-end",overflowX:"auto",paddingBottom:8}}>
-              {byMonth.map(m=>{
-                const mes=m.mes.slice(5,7);
-                return(
-                  <div key={m.mes} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:56}}>
-                    <div style={{fontSize:10,color:"#6b7280",fontWeight:600}}>{m.empresas}</div>
-                    <div style={{width:44,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
-                      <div style={{width:40,height:Math.max(4,m.empresas/maxV*90),background:"#c7d2fe",borderRadius:"4px 4px 0 0"}} title={`Empresas: ${m.empresas}`}/>
-                      <div style={{width:32,height:Math.max(2,m.contactadas/maxV*90),background:"#3b82f6",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`Contactadas: ${m.contactadas}`}/>
-                      <div style={{width:22,height:Math.max(2,m.reuniones/maxV*90),background:"#22c55e",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`Reuniones: ${m.reuniones}`}/>
-                    </div>
-                    <div style={{fontSize:10,color:"#9ca3af"}}>{MES[mes]||mes}</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{display:"flex",gap:16,marginTop:10}}>
-              {[["#c7d2fe","Empresas"],["#3b82f6","Contactadas"],["#22c55e","Reuniones"]].map(([c,l])=>(
-                <div key={l} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:"#6b7280"}}>
-                  <div style={{width:10,height:10,background:c,borderRadius:2}}/>{l}
+        {/* ── Bar chart by month ── */}
+        <div style={{fontWeight:700,fontSize:14,color:"#374151",marginBottom:12}}>📅 Actividad mensual</div>
+        <div style={{display:"flex",gap:14,alignItems:"flex-end",overflowX:"auto",paddingBottom:8}}>
+          {byMonth.map(m=>{
+            const mes=m.mes.slice(5,7), año=m.mes.slice(2,4);
+            return(
+              <div key={m.mes} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,minWidth:64}}>
+                <div style={{fontSize:11,color:"#374151",fontWeight:700}}>{m.empresas}</div>
+                <div style={{width:52,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                  <div style={{width:48,height:Math.max(4,Math.round(m.empresas/maxV*110)),background:"#c7d2fe",borderRadius:"4px 4px 0 0"}} title={`Empresas: ${m.empresas}`}/>
+                  <div style={{width:38,height:Math.max(2,Math.round(m.contacto1/maxV*110)),background:"#3b82f6",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`1er contacto: ${m.contacto1}`}/>
+                  <div style={{width:28,height:Math.max(2,Math.round(m.contacto2/maxV*110)),background:"#8b5cf6",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`2do contacto: ${m.contacto2}`}/>
+                  <div style={{width:18,height:Math.max(2,Math.round(m.reuniones/maxV*110)),background:"#22c55e",borderRadius:"4px 4px 0 0",marginTop:-1}} title={`Reuniones: ${m.reuniones}`}/>
                 </div>
-              ))}
+                <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>{MESES[mes]||mes}</div>
+                <div style={{fontSize:10,color:"#9ca3af"}}>'{año}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:14,marginTop:10,flexWrap:"wrap"}}>
+          {[["#c7d2fe","Empresas"],["#3b82f6","1er contacto"],["#8b5cf6","2do contacto"],["#22c55e","Reuniones"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#6b7280"}}>
+              <div style={{width:10,height:10,background:c,borderRadius:2}}/>{l}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
-      {/* Tabla de alto potencial */}
+      {/* ── Donuts row ── */}
+      <div style={{display:"flex",gap:20,flexWrap:"wrap",marginBottom:20}}>
+        {/* Potencial */}
+        <div style={{flex:1,minWidth:300,background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🎯 Distribución por Potencial</div>
+          <DonutChart dataObj={potData} colors={potColors} size={180}/>
+          <div style={{marginTop:16,padding:"12px",background:"#f8fafc",borderRadius:8}}>
+            <div style={{fontSize:11,color:"#6b7280",marginBottom:3}}>Score promedio DD</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#6366f1"}}>{avgScore || "—"}</div>
+            <div style={{fontSize:11,color:"#9ca3af"}}>sobre 100 · {evaluated.length} empresa{evaluated.length!==1?"s":""} evaluada{evaluated.length!==1?"s":""}</div>
+          </div>
+        </div>
+
+        {/* Sector */}
+        <div style={{flex:1,minWidth:300,background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:16}}>🏭 Distribución por Sector</div>
+          <DonutChart dataObj={sectors} colors={SECTOR_COLORS} size={180}/>
+          <div style={{marginTop:16,padding:"12px",background:"#f8fafc",borderRadius:8}}>
+            <div style={{fontSize:11,color:"#6b7280",marginBottom:3}}>Sector dominante — enfocar campañas</div>
+            <div style={{fontSize:16,fontWeight:800,color:SECTOR_COLORS[Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[0]]||"#374151"}}>
+              {Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[0]||"—"}
+            </div>
+            <div style={{fontSize:11,color:"#9ca3af"}}>{Object.entries(sectors).sort((a,b)=>b[1]-a[1])[0]?.[1]||0} empresas en este sector</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Ranking DD ── */}
       <div style={{background:"#fff",borderRadius:12,padding:20,boxShadow:"0 1px 4px rgba(0,0,0,.07)"}}>
-        <div style={{fontWeight:800,fontSize:15,marginBottom:14,color:"#0f172a"}}>🔥 Empresas con Mayor Potencial (evaluadas en DD)</div>
+        <div style={{fontWeight:800,fontSize:15,marginBottom:14,color:"#0f172a"}}>🔥 Ranking por Score — Empresas con Debida Diligencia</div>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead>
               <tr style={{background:"#f8fafc",borderBottom:"2px solid #e2e8f0"}}>
-                {["Score","Empresa","Clasificación","Ingresos","Tamaño","Proc. Legal","Marca","Estado CRM"].map(h=>(
+                {["#","Score","Empresa","Clasificación","Sector","Ingresos","Tamaño","Proc.Legal","Marca","Estado CRM"].map(h=>(
                   <th key={h} style={{padding:"8px 12px",textAlign:"left",fontWeight:600,color:"#475569",fontSize:12,whiteSpace:"nowrap"}}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {data.filter(r=>r.dd&&r.puntaje>0).sort((a,b)=>b.puntaje-a.puntaje).map(r=>{
+              {data.filter(r=>r.dd&&r.puntaje>0).sort((a,b)=>b.puntaje-a.puntaje).map((r,i)=>{
                 const pm=POT_META[r.clasificacion]||POT_META[""];
                 const em=ESTADO_META[r.estado]||ESTADO_META[""];
                 const hp=procAlert(r.dd);
-                const fmt=(n)=>{if(!n||n==="nan")return"—";const v=parseFloat(n);if(isNaN(v))return n;if(v>=1e9)return`$${(v/1e9).toFixed(0)}MM`;if(v>=1e6)return`$${(v/1e6).toFixed(0)}M`;return`$${v.toLocaleString()}`;};
+                const sc=SECTOR_COLORS[r.dd.sector||""]||"#e5e7eb";
                 return(
                   <tr key={r.id} style={{borderBottom:"1px solid #f1f5f9"}}>
-                    <td style={{padding:"8px 12px",fontWeight:800,color:r.puntaje>=70?"#166534":r.puntaje>=50?"#854d0e":"#991b1b"}}>{r.puntaje}</td>
-                    <td style={{padding:"8px 12px",fontWeight:600,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente}</td>
+                    <td style={{padding:"8px 12px",color:"#9ca3af",fontSize:12}}>{i+1}</td>
+                    <td style={{padding:"8px 12px",fontWeight:800,fontSize:15,color:r.puntaje>=70?"#166534":r.puntaje>=50?"#854d0e":"#991b1b"}}>{r.puntaje}</td>
+                    <td style={{padding:"8px 12px",fontWeight:600,maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente}</td>
                     <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}><Bdg bg={pm.bg} color={pm.color}>{pm.icon} {r.clasificacion}</Bdg></td>
-                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmt(r.dd.ingresos)}</td>
+                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
+                      {r.dd.sector
+                        ? <span style={{background:sc,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{r.dd.sector}</span>
+                        : <span style={{color:"#d1d5db"}}>—</span>}
+                    </td>
+                    <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmtI(r.dd.ingresos)}</td>
                     <td style={{padding:"8px 12px"}}>{r.dd.tamano||"—"}</td>
                     <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{hp?<span style={{color:"#dc2626",fontWeight:700}}>⚠️ SÍ</span>:<span style={{color:"#16a34a"}}>✅ No</span>}</td>
                     <td style={{padding:"8px 12px"}}>{r.dd.marca==="SÍ"?<span style={{color:"#7c3aed",fontWeight:700}}>™ Sí</span>:"No"}</td>
