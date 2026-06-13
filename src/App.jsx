@@ -5,6 +5,13 @@ const BD_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=
 const DD_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("DD CLIENTES POTENCIALES")}`;
 const REU_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("REUNIONES Y CIERRE")}`;
 
+// ── CONFIGURACIÓN DE USUARIOS AUTORIZADOS ───────────────────────────────────
+const USERS_DATABASE = {
+  "admin": "Deep2026*",
+  "johandry": "CastilloCFO2026",
+  "juan": "EmpireBros2026"
+};
+
 // ── CSV ──────────────────────────────────────────────────────────────────────
 function parseLine(line) {
   const r=[]; let c="",q=false;
