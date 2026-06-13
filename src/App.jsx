@@ -522,7 +522,7 @@ export default function App(){
   const [selected,setSelected]=useState(null);
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === "TU_CONTRASEÑA_AQUI") {
+    if (password === "SOYdeep333.") {
       setIsAuthenticated(true);
     } else {
       alert("Contraseña incorrecta");
