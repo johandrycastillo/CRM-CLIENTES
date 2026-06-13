@@ -760,7 +760,7 @@ export default function App(){
                         const tag=getTag(r.interes);
                         const pm=POT_META[r.clasificacion]||null;
                         const hp=r.dd&&procAlert(r.dd);
-                        const sColor=SC[r.dd?.sector||""]||null;
+                        const secColor=SC[r.dd?.sector||""]||null;
                         const isSel=selected?.id===r.id;
                         return(
                           <tr key={r.id} onClick={()=>setSelected(isSel?null:r)}
