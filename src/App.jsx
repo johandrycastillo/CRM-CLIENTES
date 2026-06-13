@@ -218,7 +218,7 @@ const MONTHLY=[
   {mes:"May '26", c1:15, c2:5,  reu:4},
   {mes:"Jun '26", c1:5,  c2:4,  reu:1},
 ];
-const SECTOR_DIST={"CONSTRUCTOR":7,"INMOBILIARIO":7,"SERVICIOS":7,"TECNOLOGÍA":4,"TEXTIL":5,"COMERCIAL":2,"HOTELERÍA":1};
+const SECTOR_DIST={"CONSTRUCTOR":700,"INMOBILIARIO":7,"SERVICIOS":7,"TECNOLOGÍA":4,"TEXTIL":5,"COMERCIAL":2,"HOTELERÍA":1};
 const SC={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
 const PC={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
 
