@@ -295,7 +295,9 @@ function Metricas({data}){
     empresas:data.length,
     c1:data.filter(r=>r.contacto1).length,
     c2:data.filter(r=>r.contacto2).length,
-    reu:MONTHLY.reduce((a,m)=>a+m.reu,0),
+    reu:data.filter(r=>r.tiene_reunion).length,
+    propuesta:data.filter(r=>r.propuesta).length,
+    cierre:data.filter(r=>r.cierre).length,
     alto:data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
     medio:data.filter(r=>r.clasificacion==="POTENCIAL MEDIO").length,
     bajo:data.filter(r=>r.clasificacion==="BAJO POTENCIAL").length,
@@ -305,7 +307,8 @@ function Metricas({data}){
   };
   const tc=tot.empresas?Math.round(tot.c1/tot.empresas*100):0;
   const tr=tot.c1?Math.round(tot.reu/tot.c1*100):0;
-  const tf=tot.empresas?Math.round(tot.reu/tot.empresas*100):0;
+  const tp=tot.reu?Math.round(tot.propuesta/tot.reu*100):0;
+  const tf=tot.propuesta?Math.round(tot.cierre/tot.propuesta*100):0;
   const ev=data.filter(r=>r.puntaje>0);
   const avg=ev.length?Math.round(ev.reduce((a,r)=>a+r.puntaje,0)/ev.length):0;
 
@@ -313,10 +316,11 @@ function Metricas({data}){
 
   // Conversion funnel data for horizontal bars
   const funnelItems=[
-    {label:"Total BD",    value:tot.empresas, pct:100},
-    {label:"1er contacto",value:tot.c1,       pct:tc},
-    {label:"2do contacto",value:tot.c2,       pct:tot.c1?Math.round(tot.c2/tot.c1*100):0},
-    {label:"Con reunión", value:tot.reu,      pct:tr},
+    {label:"Total BD",     value:tot.empresas,  pct:100,                                           color:"#6366f1"},
+    {label:"1er contacto", value:tot.c1,        pct:tc,                                            color:"#3b82f6"},
+    {label:"Con reunión",  value:tot.reu,       pct:tot.c1?Math.round(tot.reu/tot.c1*100):0,       color:"#8b5cf6"},
+    {label:"Propuesta",    value:tot.propuesta, pct:tot.reu?Math.round(tot.propuesta/tot.reu*100):0, color:"#f59e0b"},
+    {label:"Cierre",       value:tot.cierre,    pct:tot.propuesta?Math.round(tot.cierre/tot.propuesta*100):0, color:"#16a34a"},
   ];
 
   // Monthly grouped bar data — build as SVG
@@ -334,11 +338,11 @@ function Metricas({data}){
           {[
             {label:"Total empresas",   val:tot.empresas, color:"#6366f1"},
             {label:"1er contacto",     val:`${tot.c1} (${tc}%)`, color:"#3b82f6"},
-            {label:"2do contacto",     val:`${tot.c2}`,  color:"#8b5cf6"},
-            {label:"Con reunión",      val:`${tot.reu} (${tr}%)`, color:"#22c55e"},
-            {label:"Cierre global",    val:`${tf}%`,     color:"#f59e0b"},
-            {label:"⚠️ Proc. legal",  val:tot.conProc,  color:"#ef4444"},
-            {label:"™ Marca reg.",    val:tot.conMarca, color:"#7c3aed"},
+            {label:"🤝 Con reunión",   val:`${tot.reu} (${tr}%)`,    color:"#8b5cf6"},
+            {label:"📄 Propuesta",     val:`${tot.propuesta} (${tp}%)`, color:"#f59e0b"},
+            {label:"✅ Cierre",        val:tot.cierre,                color:"#16a34a"},
+            {label:"Tasa cierre",      val:tot.propuesta?`${tf}%`:"—", color:"#059669"},
+            {label:"⚠️ Proc. legal",  val:tot.conProc,               color:"#ef4444"},
           ].map(k=>(
             <div key={k.label} style={{background:"#f8fafc",borderRadius:10,padding:"12px 16px",borderLeft:`4px solid ${k.color}`,minWidth:100}}>
               <div style={{fontSize:22,fontWeight:800,color:k.color}}>{k.val}</div>
@@ -357,11 +361,12 @@ function Metricas({data}){
           <HBarChart
             items={funnelItems}
             maxVal={tot.empresas}
-            colors={["#6366f1","#3b82f6","#8b5cf6","#22c55e"]}
+            colors={funnelItems.map(i=>i.color)}
           />
-          <div style={{marginTop:16,display:"flex",gap:16,fontSize:11,color:"#6b7280"}}>
-            <span>📞→🤝 Tasa cierre: <strong style={{color:"#f59e0b"}}>{tf}%</strong></span>
-            <span>Contacto→Reunión: <strong style={{color:"#22c55e"}}>{tr}%</strong></span>
+          <div style={{marginTop:16,display:"flex",gap:12,fontSize:11,color:"#6b7280",flexWrap:"wrap"}}>
+            <span>📞→🤝 Reunión: <strong style={{color:"#8b5cf6"}}>{tr}%</strong></span>
+            <span>🤝→📄 Propuesta: <strong style={{color:"#f59e0b"}}>{tp}%</strong></span>
+            <span>📄→✅ Cierre: <strong style={{color:"#16a34a"}}>{tf}%</strong></span>
           </div>
         </div>
 
@@ -525,36 +530,75 @@ export default function App(){
       const ddByNit={"900782042": {"razon_social": "REFORMANTE S.A.S", "nit": "900782042", "sector": "", "rep_legal": "CAROLINA ALVARADO MARULANDA", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://reformantes.com/condiciones-de-la-lopd", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "RIESGO DE LIQUIDEZ, GESTION DE TESORERIA", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900707333": {"razon_social": "CONSTRUCCIONES MASERCA S.A.S.", "nit": "900707333", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "MARIO DE JESUS SERNA CANO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "RIESGO LEGAL\nRIESGO REPUTACIONAL", "puntaje": 18.0, "clasificacion": "DESCARTADO"}, "900911752": {"razon_social": "CONSTRUCTORA INGROSSO S.A.S.", "nit": "900911752", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "OSORNO HERRERA EMMANUEL", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://constructoraingrosso.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "890900836": {"razon_social": "CONHOGAR S.A.S.", "nit": "890900836", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GERMAN PEREZ MEJIA", "ingresos": "10000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "SÍ", "url_web": "https://www.conhogar.co", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "CONJUNTO RESIDENCIAL NATURA PH", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "RIESGO LEGAL, RIESGO DE LIQUIDEZ", "puntaje": 43.0, "clasificacion": "BAJO POTENCIAL"}, "901398785": {"razon_social": "BORNEO CAPITAL S.A.S.", "nit": "901398785", "sector": "", "rep_legal": "TOMAS EASTMAN MADRID", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": ">10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo Mercado, Riesgo economico", "puntaje": 58.0, "clasificacion": "POTENCIAL MEDIO"}, "901183489": {"razon_social": "INVERSIONES PINAR DEL RODEO S.A.S", "nit": "901183489", "sector": "", "rep_legal": "MEJIA SARRAZOLA MARY LUZ", "ingresos": "500000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 38.0, "clasificacion": "BAJO POTENCIAL"}, "900450388": {"razon_social": "CONSTRUCCIONES Y URBANIZACIONES L.G S.A.S", "nit": "900450388", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "GARCIA ANGARITA LIBARDO", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://construccionesyurbanizaciones.com/terminos-y-condiciones/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "901546499": {"razon_social": "MAVEBIENES S.A.S.", "nit": "901546499", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "VELASQUEZ PARRA JORGE ANDRES", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://mavebienes.com", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "<50 M", "riesgos": "", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "901555099": {"razon_social": "CIRCULO INMOBILIARIA DEL SUR S.A.S.", "nit": "901555099", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "SEPULVEDA PALACIO CARLOS ALBERTO", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "SÍ", "url_web": "https://www.circuloinmobiliariodelsur.co", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">500 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 60.0, "clasificacion": "POTENCIAL MEDIO"}, "811014849": {"razon_social": "MONTACARGAS AM&M S.A.S.", "nit": "811014849", "sector": "", "rep_legal": "IRMA STELLA BLANDON MONTES", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "501", "tiene_web": "SÍ", "url_web": "https://montacargasamym.com", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "", "proc_empresa": "SÍ", "detalle_proc": "EPM, Sumas de dinero y Laboral (el ultimo empresa).", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "900430124": {"razon_social": "LANGUAGE CENTERS NETWORK S.A.S.", "nit": "900430124", "sector": "", "rep_legal": "PATRICIA BATISTA CANELON", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "11", "tiene_web": "SÍ", "url_web": "https://lcnidiomas.edu.co", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "tutelas, garantías, laboral", "estructura_juridica": "PARCIAL", "patrimonio": ">100 M", "riesgos": "", "puntaje": 56.0, "clasificacion": "POTENCIAL MEDIO"}, "800167494": {"razon_social": "ADA S.A.S.", "nit": "800167494", "sector": "", "rep_legal": "CESAR AUGUSTO ECHEVERRI PEREZ", "ingresos": "20000000000", "tamano": "MEDIANA", "empleados": "200", "tiene_web": "SÍ", "url_web": "https://ada.co/terms-and-conditions/", "marca": "NO", "proc_rl": "SÍ", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "SÍ", "detalle_proc": "Laboral, sumas de dinero", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "901214227": {"razon_social": "GRUPO NUTRY S.A.S.", "nit": "901214227", "sector": "", "rep_legal": "JULIAN FRANCESCO RESTREPO ARIAS", "ingresos": "2000000000", "tamano": "MICRO", "empleados": ">15", "tiene_web": "SÍ", "url_web": "https://gruponutry.com", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 25.0, "clasificacion": "BAJO POTENCIAL"}, "800132302": {"razon_social": "OFIMA S.A.S.", "nit": "800132302", "sector": "", "rep_legal": "MARCO ANTONIO CARRASQUILLA | FLOR MARIA PALACIO DE CARRASQUILLA", "ingresos": "5000000000", "tamano": "PEQUEÑA", "empleados": "51", "tiene_web": "SÍ", "url_web": "https://www.ofima.com/lp-general/?gad_source=1&gad_campaignid=23304152356&gbraid=0AAAABAIX1HCx9FSjI35v6NcsGrKIdYPCa&gclid=Cj0KCQjwk_bPBhDXARIsACiq8R2oJkO1eq1kz_ec1iHRcahqZt6-PohIv879rgIMtexWxKf-QZx8YUAaAhKUEALw_wcB", "marca": "SÍ", "proc_rl": "SÍ", "proc_rl_sup": "SÍ", "proc_empresa": "SÍ", "detalle_proc": "De ejecucion, TUTELAS", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 75.0, "clasificacion": "ALTO POTENCIAL"}, "901497064": {"razon_social": "INVERSORA LIRIO S.A.S.", "nit": "901497064", "sector": "", "rep_legal": "JUAN CARLOS LOPEZ DIEZ", "ingresos": "100000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "SIN INFORMACIÓN", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": ">1.000 M", "riesgos": "Riesgo Legal, Riesgo de Mercado Oferta y Demanda", "puntaje": 48.0, "clasificacion": "BAJO POTENCIAL"}, "900236520": {"razon_social": "CADENA COMERCIAL OXXO COLOMBIA S.A.S", "nit": "900236520", "sector": "", "rep_legal": "ANDRES MORALES", "ingresos": "10000000000000", "tamano": "GRANDE", "empleados": "", "tiene_web": "SÍ", "url_web": "https://colombia.oxxodomicilios.com", "marca": "SÍ", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "SÍ", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "", "puntaje": 98.0, "clasificacion": "ALTO POTENCIAL"}, "901394202": {"razon_social": "INVERSIONES INTRAMAR S&P SAS", "nit": "901394202", "sector": "", "rep_legal": "", "ingresos": "0", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901529751": {"razon_social": "IMTAMAR S.A.S.", "nit": "901529751", "sector": "", "rep_legal": "", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "800213075": {"razon_social": "RESTCAFE S A S", "nit": "800213075", "sector": "", "rep_legal": "Marlon Masis Campos", "ingresos": "", "tamano": "MICRO", "empleados": "482", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 5.0, "clasificacion": "DESCARTADO"}, "901822717": {"razon_social": "BRAINFOODS S.A.S", "nit": "901822717", "sector": "", "rep_legal": "DAVID TRUJILLO GONZALEZ", "ingresos": "1000000000", "tamano": "MICRO", "empleados": "<10", "tiene_web": "NO", "url_web": "", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "NO", "patrimonio": ">100 M", "riesgos": "", "puntaje": 30.0, "clasificacion": "BAJO POTENCIAL"}, "901778642": {"razon_social": "CONSTRUCCIONES ROJAS Y ALVAREZ S.A.S.", "nit": "901778642", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901637324": {"razon_social": "INVERSIONES LOS PERRITOS DEL MONO S.A.S.", "nit": "901637324", "sector": "", "rep_legal": "ANDRES FELIPE PELAEZ AGUDELO", "ingresos": "20000000000", "tamano": "PEQUEÑA", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://losperritosdelmono.com", "marca": "NO", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 20.0, "clasificacion": "DESCARTADO"}, "811044893": {"razon_social": "AGUA BENDITA S.A.S", "nit": "811044893", "sector": "", "rep_legal": "HINESTROZA MONTOYA MARIANA", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">20", "tiene_web": "SÍ", "url_web": "https://www.aguabendita.com.co", "marca": "SÍ", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "PARCIAL", "patrimonio": "", "riesgos": "", "puntaje": 61.0, "clasificacion": "POTENCIAL MEDIO"}, "900778625": {"razon_social": "GESTION INMOBILIARIA MIC S.A.S.", "nit": "900778625", "sector": "INMOBILIARIA | CONSTRUCCIÓN", "rep_legal": "Camargo Delgado Maria Ines | Reyes Vargas Mireya | Thomas Camargo Daniel", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901554815": {"razon_social": "RICHOUSE INMOBILIARIA SAS", "nit": "901554815", "sector": "", "rep_legal": "Lux Mirta Espitia Chaparro", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "900009803": {"razon_social": "INMOBILIARIA GOMEZ Y ASOCIADOS S.A.S.", "nit": "900009803", "sector": "", "rep_legal": "LUZ DARY GOMEZ OSPINA | NUBIA ESTELA GOMEZ OSPINA | HECTOR FABIAN GOMEZ OSPINA", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901166382": {"razon_social": "INVERSIONES BLO S.A.S", "nit": "901166382", "sector": "", "rep_legal": "Wilingthon Ortiz Jaramillo", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "901875692": {"razon_social": "CONSTRUCTORA INMOBILIARIA HABITAT DE LOS ANDES SAS", "nit": "901875692", "sector": "", "rep_legal": "PEÑA PIÑEROS JORGE", "ingresos": "", "tamano": "REVISAR SECTOR", "empleados": "", "tiene_web": "", "url_web": "", "marca": "", "proc_rl": "", "proc_rl_sup": "", "proc_empresa": "", "detalle_proc": "", "estructura_juridica": "", "patrimonio": "", "riesgos": "", "puntaje": 0.0, "clasificacion": "DESCARTADO"}, "902002134": {"razon_social": "REVOLUT BANK COLOMBIA S.A.", "nit": "902002134", "sector": "FINTECH / BANCO", "rep_legal": "Diego Caicedo Mosquera", "ingresos": "100000000000", "tamano": "GRANDE", "empleados": ">50", "tiene_web": "SÍ", "url_web": "https://www.revolut.com/es-CO/", "marca": "NO", "proc_rl": "NO", "proc_rl_sup": "NO", "proc_empresa": "NO", "detalle_proc": "", "estructura_juridica": "SÍ", "patrimonio": ">1.000 M", "riesgos": "Consideradom un sector con alta supervisión y vigilancia por parte de la SFC. Asimismo, se ve expuesta a riesgos regulatorios, riesgos tributarios y riesgo de LAFT", "puntaje": 83.0, "clasificacion": "ALTO POTENCIAL"}};
       const lookupDD=(nombre,nit)=>ddByNit[nit]||ddByName[nombre]||null;
       
-      // ── Parse REUNIONES — match por NIT (si existe) o nombre exacto ──
+      // ── Parse REUNIONES Y CIERRE ──
+      // Lee: CLIENTE, NIT, REUNION, PROPUESTA, FECHA, COMENTARIOS, ESTADO
+      // Indicadores: tiene_reunion, propuesta, cierre
       const reuRaw=parseRaw(reuT);
-      // Find header row: must have both CLIENTE and REUNION as separate cells
-      const reuHi=reuRaw.findIndex(r=>r.some(c=>c.trim()==="CLIENTE")&&r.some(c=>c.trim()==="REUNION"||c.trim()==="REUNIÓN"));
+
+      // Encontrar fila header — busca la que tiene CLIENTE y REUNION como celdas exactas
+      const reuHi=reuRaw.findIndex(r=>
+        r.some(c=>c.trim()==="CLIENTE") &&
+        r.some(c=>c.trim()==="REUNION"||c.trim()==="REUNIÓN")
+      );
+
       const reuByNit={}, reuByName={};
+
       if(reuHi>=0){
         const rH=reuRaw[reuHi];
-        const ci=rH.findIndex(h=>h.trim()==="CLIENTE");
-        const ni=rH.findIndex(h=>h.trim().toUpperCase()==="NIT");
-        const ri=rH.findIndex(h=>h.trim()==="REUNION"||h.trim()==="REUNIÓN");
-        const fi=rH.findIndex(h=>h.trim()==="FECHA");
-        const coi=rH.findIndex(h=>h.trim()==="COMENTARIOS");
-        const esti=rH.findIndex(h=>h.trim()==="ESTADO");
+        // Índices de columnas con trim para evitar espacios
+        const CI  = rH.findIndex(h=>h.trim()==="CLIENTE");
+        const NI  = rH.findIndex(h=>h.trim().toUpperCase()==="NIT");
+        const RI  = rH.findIndex(h=>h.trim()==="REUNION"||h.trim()==="REUNIÓN");
+        const PI  = rH.findIndex(h=>h.trim().toUpperCase().includes("PROPUESTA"));
+        const FI  = rH.findIndex(h=>h.trim()==="FECHA");
+        const COI = rH.findIndex(h=>h.trim()==="COMENTARIOS");
+        const ESI = rH.findIndex(h=>h.trim()==="ESTADO");
+
         for(let i=reuHi+1;i<reuRaw.length;i++){
           const row=reuRaw[i];
-          const nombre=(row[ci]||"").toUpperCase().trim();
+          const nombre=(row[CI]||"").toUpperCase().trim();
           if(nombre.length<2) continue;
-          const nitRaw=ni>=0?(row[ni]||""):"";
+
+          const nitRaw=NI>=0?(row[NI]||""):"";
           const nit=cleanNIT(nitRaw);
+
+          const coment=(row[COI]||"").toLowerCase();
+          const estado=(row[ESI]||"").toLowerCase();
+          const reunVal=(row[RI]||"").toUpperCase().trim();
+
+          // Detección de banderas
+          const tieneReunion=["TRUE","VERDADERO","1","SI","SÍ"].includes(reunVal);
+
+          // Propuesta: columna dedicada O detectada en comentarios/estado
+          const propColVal=PI>=0?(row[PI]||""):"";
+          const tienePropuesta=
+            ["TRUE","VERDADERO","1","SI","SÍ"].includes(propColVal.toUpperCase().trim()) ||
+            coment.includes("propuesta") ||
+            coment.includes("enviar prop") ||
+            coment.includes("llamar - enviar");
+
+          // Cierre: estado CERRADO o comentario con firma/contrato
+          const tieneCierre=
+            estado.includes("cerrado") ||
+            coment.includes("firma contrato") ||
+            coment.includes("cierre") ||
+            coment.includes("firma") && coment.includes("contrato");
+
           const entry={
-            tiene_reunion:["TRUE","VERDADERO","1","SI","SÍ"].includes((row[ri]||"").toUpperCase().trim()),
-            fecha:row[fi]||"",
-            comentarios:row[coi]||"",
-            estado:esti>=0?(row[esti]||""):"",
+            tiene_reunion:tieneReunion,
+            propuesta:tienePropuesta,
+            cierre:tieneCierre,
+            estado_reu:row[ESI]||"",
+            comentarios_reu:row[COI]||"",
+            fecha_reu:row[FI]||"",
           };
-          // Guardar por NIT (exacto) y por nombre (exacto)
+
+          // Match por NIT (si existe) y por nombre exacto
           if(nit) reuByNit[nit]=entry;
           reuByName[nombre]=entry;
         }
       }
+
       const lookupReu=(nombre,nit)=>reuByNit[nit]||reuByName[nombre]||null;
 
       // ── Parse BD ──
@@ -587,9 +631,12 @@ export default function App(){
           dd,
           puntaje:dd?.puntaje||0,
           clasificacion:dd?.clasificacion||"",
-          // Reunión
+          // Reunión + Propuesta + Cierre
           tiene_reunion:reu?.tiene_reunion||false,
-          reunion_comentarios:reu?.comentarios||"",
+          propuesta:reu?.propuesta||false,
+          cierre:reu?.cierre||false,
+          estado_reu:reu?.estado_reu||"",
+          reunion_comentarios:reu?.comentarios_reu||"",
         };
       });
 
@@ -602,7 +649,7 @@ export default function App(){
         return (estadoOrder[a.estado]||4)-(estadoOrder[b.estado]||4);
       });
 
-      const reuList=Object.values(reuByName);
+      const reuList=Object.values(reuByName).filter(r=>r.tiene_reunion);
       setData(enriched);setReuniones(reuList);
       setLastUpdate(new Date().toLocaleTimeString("es-CO"));
     }catch(e){setError(e.message);}
@@ -632,6 +679,8 @@ export default function App(){
     seguimiento:data.filter(r=>r.estado==="SEGUIMIENTO").length,
     alto:data.filter(r=>r.clasificacion==="ALTO POTENCIAL").length,
     conReunion:data.filter(r=>r.tiene_reunion).length,
+    conPropuesta:data.filter(r=>r.propuesta).length,
+    conCierre:data.filter(r=>r.cierre).length,
     conProc:data.filter(r=>r.dd&&procAlert(r.dd)).length,
   }),[data]);
 
@@ -677,12 +726,13 @@ export default function App(){
           <>
             {/* STATS */}
             <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}}>
-              <KPI label="Total"            value={stats.total}       color="#6366f1"/>
-              <KPI label="📞 Llamar hoy"   value={stats.llamarHoy}   color="#eab308"/>
-              <KPI label="🔄 Seguimiento"  value={stats.seguimiento}  color="#22c55e"/>
-              <KPI label="🔥 Alto potencial" value={stats.alto}       color="#f97316"/>
-              <KPI label="🤝 Con reunión"  value={stats.conReunion}   color="#8b5cf6"/>
-              <KPI label="⚠️ Proc. legal"  value={stats.conProc}     color="#ef4444"/>
+              <KPI label="Total BD"          value={stats.total}       color="#6366f1"/>
+              <KPI label="📞 Llamar hoy"    value={stats.llamarHoy}   color="#eab308"/>
+              <KPI label="🔄 Seguimiento"   value={stats.seguimiento}  color="#22c55e"/>
+              <KPI label="🔥 Alto potencial" value={stats.alto}        color="#f97316"/>
+              <KPI label="🤝 Reunión"       value={stats.conReunion}   color="#8b5cf6"/>
+              <KPI label="📄 Propuesta"     value={stats.conPropuesta} color="#3b82f6"/>
+              <KPI label="✅ Cierre"        value={stats.conCierre}    color="#16a34a"/>
             </div>
 
             {/* FILTROS */}
@@ -713,7 +763,7 @@ export default function App(){
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
                     <thead>
                       <tr style={{background:"#f8fafc",borderBottom:"2px solid #e2e8f0"}}>
-                        {["Score","Potencial","Estado","Empresa","Sector","Contacto","Teléfono","Interés","🤝","Asignado"].map(h=>(
+                        {["Score","Potencial","Estado","Empresa","Sector","Contacto","Teléfono","Interés","🤝","📄","✅","Asignado"].map(h=>(
                           <th key={h} style={{padding:"10px 11px",textAlign:"left",fontWeight:600,color:"#475569",whiteSpace:"nowrap",fontSize:12}}>{h}</th>
                         ))}
                       </tr>
@@ -754,7 +804,13 @@ export default function App(){
                               {tag?<Bdg bg={tag.bg} color={tag.color}>{tag.label}</Bdg>:<span style={{color:"#d1d5db"}}>—</span>}
                             </td>
                             <td style={{padding:"9px 11px",textAlign:"center"}}>
-                              {r.tiene_reunion?<span title="Reunión registrada en hoja REUNIONES Y CIERRE">🤝</span>:<span style={{color:"#d1d5db"}}>—</span>}
+                              {r.tiene_reunion?<span title="Reunión realizada">🤝</span>:<span style={{color:"#d1d5db"}}>—</span>}
+                            </td>
+                            <td style={{padding:"9px 11px",textAlign:"center"}}>
+                              {r.propuesta?<span title={`Propuesta enviada — ${r.reunion_comentarios}`} style={{cursor:"help"}}>📄</span>:<span style={{color:"#d1d5db"}}>—</span>}
+                            </td>
+                            <td style={{padding:"9px 11px",textAlign:"center"}}>
+                              {r.cierre?<span title="CERRADO ✅" style={{fontWeight:700,color:"#16a34a"}}>✅</span>:<span style={{color:"#d1d5db"}}>—</span>}
                             </td>
                             <td style={{padding:"9px 11px",color:"#6b7280",fontSize:12}}>{r.quien||"—"}</td>
                           </tr>
