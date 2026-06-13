@@ -18,7 +18,11 @@ function parseLine(line) {
 }
 function parseCSV(text){
   const lines=text.split("\n").map(l=>l.trim()).filter(Boolean);
-  let hi=lines.findIndex(l=>l.includes("CLIENTE")&&l.includes("ESTADO"));
+  // Find header row: must have "CLIENTE" and "ESTADO" as exact cells (not substring)
+  let hi=lines.findIndex(l=>{
+    const cells=parseLine(l).map(c=>c.replace(/^"|"$/g,"").trim());
+    return cells.some(c=>c==="CLIENTE") && cells.some(c=>c==="ESTADO");
+  });
   if(hi===-1)hi=1;
   const hdrs=parseLine(lines[hi]).map(h=>h.replace(/^"|"$/g,"").trim());
   return lines.slice(hi+1).map(l=>{
