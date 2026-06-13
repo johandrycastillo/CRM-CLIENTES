@@ -23,7 +23,12 @@ function parseCSV(text){
     const cells=parseLine(l).map(c=>c.replace(/^"|"$/g,"").trim());
     return cells.some(c=>c==="CLIENTE") && cells.some(c=>c==="ESTADO");
   });
-  if(hi===-1)hi=1;
+  console.log("parseCSV: total lines=",lines.length,"header at index=",hi,"first line=",lines[0]?.slice(0,60));
+  if(hi===-1){
+    // Fallback: try line 1 or look for CLIENTE anywhere
+    hi=lines.findIndex(l=>parseLine(l).map(c=>c.replace(/^"|"$/g,"").trim()).includes("CLIENTE"));
+    if(hi===-1)hi=1;
+  }
   const hdrs=parseLine(lines[hi]).map(h=>h.replace(/^"|"$/g,"").trim());
   return lines.slice(hi+1).map(l=>{
     const cols=parseLine(l).map(c=>c.replace(/^"|"$/g,"").trim());
@@ -574,10 +579,14 @@ export default function App(){
 
 
       // ── Parse BD ──
-      // Parse BD — if fetch failed, bdT is empty and bdRows will be []
+      // Parse BD
       const bdRows=parseCSV(bdT).filter(r=>r["CLIENTE"]?.length>1);
-      if(bdRows.length===0&&!bdT){
-        setError("No se pudo cargar el BD desde Google Sheets. Verifica que la hoja sea pública (compartir → cualquier persona con el link puede ver).");
+      console.log("BD rows parsed:", bdRows.length, "| bdT length:", bdT.length);
+      if(bdRows.length===0){
+        const msg=bdT.length<100
+          ? "Error: Google Sheets no respondió. Verifica que la hoja sea pública."
+          : `Error al parsear BD. Primeras letras recibidas: "${bdT.slice(0,80)}"`;
+        setError(msg);
         setLoading(false); return;
       }
       const enriched=bdRows.map((r,idx)=>{
