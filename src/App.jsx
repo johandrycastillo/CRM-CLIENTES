@@ -232,14 +232,16 @@ function Detail({c,onClose}){
 }
 
 // ── MÉTRICAS ─────────────────────────────────────────────────────────────────
-const MONTHLY=[
-  {mes:"Mar '26", c1:7,  c2:4,  reu:16},
-  {mes:"Abr '26", c1:3,  c2:1,  reu:13},
-  {mes:"May '26", c1:15, c2:5,  reu:4},
-  {mes:"Jun '26", c1:5,  c2:4,  reu:1},
-];
-const SECTOR_DIST={"CONSTRUCTOR":7,"INMOBILIARIO":7,"SERVICIOS":7,"TECNOLOGÍA":4,"TEXTIL":5,"COMERCIAL":2,"HOTELERÍA":1};
-const SC={"CONSTRUCTOR":"#3b82f6","INMOBILIARIO":"#8b5cf6","SERVICIOS":"#f59e0b","TECNOLOGÍA":"#22c55e","COMERCIAL":"#f97316","TEXTIL":"#ec4899","HOTELERÍA":"#06b6d4"};
+// IMPORTANTE: ya no hay datos hardcodeados aquí. MONTHLY y SECTOR_DIST se calculan
+// 100% en vivo dentro de Metricas() a partir de `data`, sin importar cuántas filas
+// tenga el Sheet (1, 144, o 1 millón).
+const SC_PALETTE=["#3b82f6","#8b5cf6","#f59e0b","#22c55e","#f97316","#ec4899","#06b6d4","#eab308","#14b8a6","#a855f7","#ef4444","#84cc16"];
+function colorForSector(sector,sectorList){
+  // Asigna un color estable según el orden alfabético de los sectores presentes,
+  // así nuevos sectores que aparezcan en el Sheet siempre tienen color consistente
+  const idx=sectorList.indexOf(sector);
+  return SC_PALETTE[idx % SC_PALETTE.length]||"#94a3b8";
+}
 const PC={"Alto potencial":"#22c55e","Potencial medio":"#f59e0b","Bajo potencial":"#ef4444","Descartado":"#9ca3af"};
 
 function fmtM(n){
@@ -320,6 +322,61 @@ function Donut({data, colors, size=160}){
 }
 
 function Metricas({data}){
+  // ── Sectores 100% en vivo: cuenta cualquier sector presente en `data`, sin importar
+  // cuántos registros haya o qué sectores nuevos aparezcan en el Sheet ──
+  const SECTOR_DIST={};
+  data.forEach(r=>{
+    if(r.dd&&r.dd.sector){
+      SECTOR_DIST[r.dd.sector]=(SECTOR_DIST[r.dd.sector]||0)+1;
+    }
+  });
+  const sectorList=Object.keys(SECTOR_DIST).sort();
+  const SC={};
+  sectorList.forEach(s=>{SC[s]=colorForSector(s,sectorList);});
+
+  // ── Actividad mensual 100% en vivo: agrupa por mes/año a partir de la columna FECHA
+  // de cada registro (y de las reuniones), sin asumir ningún mes fijo ──
+  const monthMap={};
+  const parseFechaToKey=(f)=>{
+    if(!f)return null;
+    // Soporta formatos DD/MM/YYYY y fechas largas en español
+    const m1=f.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m1)return `${m1[3]}-${m1[2].padStart(2,"0")}`;
+    const meses={"enero":"01","febrero":"02","marzo":"03","abril":"04","mayo":"05","junio":"06","julio":"07","agosto":"08","septiembre":"09","octubre":"10","noviembre":"11","diciembre":"12"};
+    const m2=f.toLowerCase().match(/de\s+(\w+)\s+de\s+(\d{4})/);
+    if(m2&&meses[m2[1]])return `${m2[2]}-${meses[m2[1]]}`;
+    return null;
+  };
+  const ensureMonth=(key)=>{
+    if(!monthMap[key])monthMap[key]={key,c1:0,c2:0,reu:0};
+    return monthMap[key];
+  };
+  data.forEach(r=>{
+    const key=parseFechaToKey(r.fecha);
+    if(key){
+      if(r.contacto1)ensureMonth(key).c1++;
+      if(r.contacto2)ensureMonth(key).c2++;
+    }
+  });
+  data.forEach(r=>{
+    if(r.tiene_reunion){
+      const key=parseFechaToKey(r.fecha)||parseFechaToKey(r.reunion_comentarios);
+      if(key)ensureMonth(key).reu++;
+      else{
+        // Si no hay fecha parseable, igual contamos la reunión en un bucket "Sin fecha"
+        ensureMonth("zzz-sf").reu++;
+      }
+    }
+  });
+  const MESES_NOMBRE={"01":"Ene","02":"Feb","03":"Mar","04":"Abr","05":"May","06":"Jun","07":"Jul","08":"Ago","09":"Sep","10":"Oct","11":"Nov","12":"Dic"};
+  const MONTHLY=Object.values(monthMap)
+    .filter(m=>m.key!=="zzz-sf")
+    .sort((a,b)=>a.key.localeCompare(b.key))
+    .map(m=>{
+      const [yr,mo]=m.key.split("-");
+      return {mes:`${MESES_NOMBRE[mo]||mo} '${yr.slice(2)}`, c1:m.c1, c2:m.c2, reu:m.reu};
+    });
+
   const tot={
     empresas:data.length,
     c1:data.filter(r=>r.contacto1).length,
@@ -771,6 +828,16 @@ export default function App(){
     conCierre:data.filter(r=>r.cierre).length,
     conProc:data.filter(r=>r.dd&&procAlert(r.dd)).length,
   }),[data]);
+
+  // Mapa de colores por sector, 100% en vivo a partir de los sectores presentes en `data`
+  const SC=useMemo(()=>{
+    const sectors=new Set();
+    data.forEach(r=>{if(r.dd&&r.dd.sector)sectors.add(r.dd.sector);});
+    const list=[...sectors].sort();
+    const map={};
+    list.forEach(s=>{map[s]=colorForSector(s,list);});
+    return map;
+  },[data]);
 
   if(loading)return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",gap:16,color:"#475569"}}>
