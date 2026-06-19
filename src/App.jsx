@@ -610,7 +610,8 @@ export default function App(){
         [bdT,reuT,ddT]=await Promise.all([bdR.text(),reuR.text(),ddR.text()]);
         console.log("Fetched live: BD=",bdT.length,"REU=",reuT.length,"DD=",ddT.length);
       }catch(fetchErr){
-        console.warn("Fetch failed, using embedded data as fallback:",fetchErr.message);
+        console.error("Fetch en vivo falló:",fetchErr.message);
+        setError("No se pudo conectar con Google Sheets en este momento. Los datos mostrados pueden estar desactualizados. Verifica tu conexión y presiona Actualizar de nuevo. Detalle: "+fetchErr.message);
       }
 
       // ── DD data embedded from Excel (exact NIT or name match only) ──
@@ -699,11 +700,10 @@ export default function App(){
       
       // ── REUNIONES      const lookupDD=(nombre,nit)=>ddByNit[nit]||ddByName[nombre]||null;
       
-      // ── REUNIONES Y CIERRE — datos embebidos del Drive ──
-      // Match por NIT exacto primero, luego nombre exacto
-      const reuByName={"ROTOTECH": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-12"}, "TECH 360 - PROYECTO 1": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-03"}, "TECH 360 - PROYECTO 2": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "DESARROLLO INMOBILIARIO EL CARMEN": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "CONSTRUCTORA INMOBILIARIA Y MOBILIARIA DALILA Y ANDREA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "INVERSIONES LUGAL SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "SOCIEDAD HOTEL BAMBU MILLA DE ORO S.A.S": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "MYC SOLUTIONS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-20"}, "CARIOCA BARBERIA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-31"}, "ENCURTIDOS JAMAICA": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-11"}, "TRONEX SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-08"}, "EDEN BISTRO S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-07"}, "RIORION S.A.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-05"}, "TODO BIENES S.A.S.": {"tiene_reunion": false, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": ""}, "GRUPO NUTRY S.A.S.": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}};
-      const reuByNit={"901214227": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}};
-      // También leer la hoja en vivo para capturar updates futuros
+      // ── REUNIONES Y CIERRE — 100% en vivo desde Google Sheets, sin datos embebidos ──
+      // Match por NIT exacto primero, luego nombre exacto, luego nombre normalizado
+      const reuByName={};
+      const reuByNit={};
       const reuRaw=parseRaw(reuT);
       const reuHi=reuRaw.findIndex(r=>r.some(c=>c.trim()==="CLIENTE")&&r.some(c=>c.trim()==="REUNION"||c.trim()==="REUNIÓN"));
       if(reuHi>=0){
@@ -736,6 +736,9 @@ export default function App(){
           if(nit)reuByNit[nit]=entry;
           reuByName[nombre]=entry;
         }
+        console.log("REUNIONES Y CIERRE leído en vivo:",Object.keys(reuByName).length,"empresas desde Google Sheets");
+      } else {
+        console.warn("⚠️ No se pudo leer la hoja REUNIONES Y CIERRE (header no encontrado). reuT length:",reuT.length);
       }
       // Normaliza nombres para matching tolerante: quita acentos, S.A.S/SAS, 
       // puntuación, espacios extra, y plurales simples (S final tras palabra >3 letras)
