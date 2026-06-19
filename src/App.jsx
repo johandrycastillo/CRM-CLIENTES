@@ -585,17 +585,32 @@ export default function App(){
         const kCLAS = findKey("CLASIFICACIÓN")||findKey("CLASIFICACION");
 
         console.log("DD columns found:",{kRS,kNIT,kSEC,kPUN,kCLAS});
+        console.log("DD sample row 0:",ddRows[0]);
+        console.log("DD sample row 1:",ddRows[1]);
+        console.log("DD row 0 clasificacion raw:",ddRows[0]?.[kCLAS],"puntaje raw:",ddRows[0]?.[kPUN]);
 
         for(const row of ddRows){
           const razon=(row[kRS]||"").trim();
           if(razon.length<2)continue;
           const nombre=razon.toUpperCase();
           const nit=cleanNIT(row[kNIT]||"");
-          const clasRaw=(row[kCLAS]||"").toUpperCase();
-          const clasNorm=clasRaw.includes("ALTO")?"ALTO POTENCIAL":clasRaw.includes("MEDIO")?"POTENCIAL MEDIO":clasRaw.includes("BAJO")?"BAJO POTENCIAL":clasRaw.includes("DESCAR")?"DESCARTADO":clasRaw;
+          // Normaliza acentos y espacios para evitar problemas de matching
+          const clasRawOrig=(row[kCLAS]||"").trim();
+          const clasNorm0=clasRawOrig.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+          let clasNorm;
+          if(clasNorm0.includes("ALTO"))clasNorm="ALTO POTENCIAL";
+          else if(clasNorm0.includes("MEDIO"))clasNorm="POTENCIAL MEDIO";
+          else if(clasNorm0.includes("BAJO"))clasNorm="BAJO POTENCIAL";
+          else if(clasNorm0.includes("DESCAR"))clasNorm="DESCARTADO";
+          else{
+            // Si no matchea ningún patrón conocido, inferir por puntaje como respaldo
+            const p=parseFloat(row[kPUN])||0;
+            clasNorm=p>=70?"ALTO POTENCIAL":p>=50?"POTENCIAL MEDIO":p>0?"BAJO POTENCIAL":"";
+            if(clasRawOrig)console.warn("Clasificación no reconocida:",JSON.stringify(clasRawOrig),"-> inferida por puntaje:",clasNorm);
+          }
           const entry={
             razon_social:razon,nit,
-            sector:(row[kSEC]||"").trim(),
+            sector:(row[kSEC]||"").trim().toUpperCase(),
             rep_legal:(row[kRL]||"").trim(),
             ingresos:(row[kING]||"").replace(/[^0-9]/g,""),
             tamano:(row[kTAM]||"").trim(),
