@@ -603,15 +603,39 @@ export default function App(){
   const fetchData=async()=>{
     try{
       setLoading(true);setError(null);
-      // Fetch BD and REU — handle failures gracefully
+      // Cache-busting: Google Sheets gviz cachea agresivamente. Sin esto, el
+      // navegador (y a veces Google) puede devolver una versión vieja del CSV
+      // aunque la hoja ya se haya actualizado.
+      const cb=`&_cb=${Date.now()}`;
       let bdT="",reuT="",ddT="";
+      const fetchErrors=[];
       try{
-        const [bdR,reuR,ddR]=await Promise.all([fetch(BD_URL),fetch(REU_URL),fetch(DD_URL)]);
+        const [bdR,reuR,ddR]=await Promise.all([
+          fetch(BD_URL+cb,{cache:"no-store"}),
+          fetch(REU_URL+cb,{cache:"no-store"}),
+          fetch(DD_URL+cb,{cache:"no-store"}),
+        ]);
+        // fetch() NO lanza error en respuestas HTTP fallidas (404, 403, etc.) —
+        // solo en errores de red. Hay que revisar response.ok explícitamente,
+        // o un error de permisos en el Sheet pasaría desapercibido y el CRM
+        // procesaría una página de error HTML como si fuera el CSV real.
+        if(!bdR.ok)fetchErrors.push(`BD PRINCIPAL: HTTP ${bdR.status}`);
+        if(!reuR.ok)fetchErrors.push(`REUNIONES Y CIERRE: HTTP ${reuR.status}`);
+        if(!ddR.ok)fetchErrors.push(`DD CLIENTES POTENCIALES: HTTP ${ddR.status}`);
         [bdT,reuT,ddT]=await Promise.all([bdR.text(),reuR.text(),ddR.text()]);
-        console.log("Fetched live: BD=",bdT.length,"REU=",reuT.length,"DD=",ddT.length);
+        // Verificación adicional: si Google devuelve HTML en vez de CSV
+        // (típico de hoja no pública o nombre de pestaña incorrecto), el
+        // contenido empieza con "<" en vez de comillas o letras del CSV.
+        if(bdT.trim().startsWith("<"))fetchErrors.push("BD PRINCIPAL devolvió HTML en vez de CSV (revisar que la hoja sea pública)");
+        if(reuT.trim().startsWith("<"))fetchErrors.push("REUNIONES Y CIERRE devolvió HTML en vez de CSV (revisar que la hoja sea pública)");
+        if(ddT.trim().startsWith("<"))fetchErrors.push("DD CLIENTES POTENCIALES devolvió HTML en vez de CSV (revisar que la hoja sea pública)");
+        console.log("Fetched live: BD=",bdT.length,"REU=",reuT.length,"DD=",ddT.length,"| errores:",fetchErrors);
       }catch(fetchErr){
-        console.error("Fetch en vivo falló:",fetchErr.message);
-        setError("No se pudo conectar con Google Sheets en este momento. Los datos mostrados pueden estar desactualizados. Verifica tu conexión y presiona Actualizar de nuevo. Detalle: "+fetchErr.message);
+        console.error("Fetch en vivo falló (error de red):",fetchErr.message);
+        fetchErrors.push("Error de red: "+fetchErr.message);
+      }
+      if(fetchErrors.length>0){
+        setError("⚠️ Problema actualizando desde Google Sheets:\n"+fetchErrors.join(" | ")+"\nLos datos pueden estar desactualizados o incompletos.");
       }
 
       // ── DD CLIENTES POTENCIALES — 100% en vivo, SIN datos embebidos ──
@@ -919,17 +943,30 @@ export default function App(){
       <div style={{fontSize:13,color:"#9ca3af"}}>Conectando con Google Sheets</div>
     </div>
   );
-  if(error)return(
+  // Solo bloquear pantalla completa si HAY error Y no hay absolutamente ningún
+  // dato cargado (ni siquiera de un fetch anterior). Si ya hay datos (de esta
+  // sesión o de un refresh previo exitoso), se muestra el CRM normal con un
+  // banner de advertencia arriba, en vez de tapar todo.
+  if(error&&data.length===0)return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",gap:16}}>
       <div style={{fontSize:40}}>⚠️</div>
       <div style={{fontSize:16,fontWeight:600,color:"#ef4444"}}>Error al cargar</div>
-      <div style={{fontSize:13,color:"#6b7280",maxWidth:380,textAlign:"center"}}>{error}</div>
+      <div style={{fontSize:13,color:"#6b7280",maxWidth:500,textAlign:"center",whiteSpace:"pre-line"}}>{error}</div>
       <button onClick={fetchData} style={{padding:"10px 20px",background:"#3b82f6",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontWeight:600}}>Reintentar</button>
     </div>
   );
 
   return(
     <div style={{minHeight:"100vh",background:"#f8fafc",color:"#1e293b"}}>
+      {/* BANNER DE ERROR NO-BLOQUEANTE — visible si algo falló en el último fetch
+          pero aún hay datos (de este fetch parcial o de uno anterior) para mostrar */}
+      {error&&(
+        <div style={{background:"#fef2f2",borderBottom:"2px solid #fecaca",padding:"10px 28px",display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:18}}>⚠️</span>
+          <span style={{fontSize:12,color:"#991b1b",whiteSpace:"pre-line",flex:1}}>{error}</span>
+          <button onClick={fetchData} style={{padding:"4px 12px",background:"#ef4444",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,flexShrink:0}}>Reintentar</button>
+        </div>
+      )}
       {/* HEADER */}
       <div style={{background:"#0f172a",color:"#fff",padding:"16px 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
