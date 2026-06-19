@@ -392,7 +392,11 @@ function Metricas({data}){
     conMarca:data.filter(r=>r.dd&&r.dd.marca==="SÍ").length,
   };
   const tc=tot.empresas?Math.round(tot.c1/tot.empresas*100):0;
-  const tr=tot.c1?Math.round(tot.reu/tot.c1*100):0;
+  // tr usa el máximo entre c1 y reu como base, para que nunca pase de 100%
+  // (las reuniones que vienen de REUNIONES Y CIERRE sin "1er contacto" formal en BD
+  // no deben inflar la tasa por encima de lo lógico)
+  const baseReu=Math.max(tot.c1,tot.reu)||1;
+  const tr=Math.round(tot.reu/baseReu*100);
   const tp=tot.reu?Math.round(tot.propuesta/tot.reu*100):0;
   const tf=tot.propuesta?Math.round(tot.cierre/tot.propuesta*100):0;
   const ev=data.filter(r=>r.puntaje>0);
@@ -404,7 +408,7 @@ function Metricas({data}){
   const funnelItems=[
     {label:"Total BD",     value:tot.empresas,  pct:100,                                           color:"#6366f1"},
     {label:"1er contacto", value:tot.c1,        pct:tc,                                            color:"#3b82f6"},
-    {label:"Con reunión",  value:tot.reu,       pct:tot.c1?Math.round(tot.reu/tot.c1*100):0,       color:"#8b5cf6"},
+    {label:"Con reunión",  value:tot.reu,       pct:tr,       color:"#8b5cf6"},
     {label:"Propuesta",    value:tot.propuesta, pct:tot.reu?Math.round(tot.propuesta/tot.reu*100):0, color:"#f59e0b"},
     {label:"Cierre",       value:tot.cierre,    pct:tot.propuesta?Math.round(tot.cierre/tot.propuesta*100):0, color:"#16a34a"},
   ];
@@ -697,8 +701,8 @@ export default function App(){
       
       // ── REUNIONES Y CIERRE — datos embebidos del Drive ──
       // Match por NIT exacto primero, luego nombre exacto
-      const reuByName={"ROTOTECH": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-12"}, "TECH 360 - PROYECTO 1": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-03"}, "TECH 360 - PROYECTO 2": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "DESARROLLO INMOBILIARIO EL CARMEN": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "CONSTRUCTORA INMOBILIARIA Y MOBILIARIA DALILA Y ANDREA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "INVERSIONES LUGAL SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "SOCIEDAD HOTEL BAMBU MILLA DE ORO S.A.S": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "MYC SOLUTIONS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-20"}, "CARIOCA BARBERIA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-31"}, "ENCURTIDOS JAMAICA": {"tiene_reunion": true, "propuesta": true, "cierre": true, "estado_reu": "CERRADO", "comentarios_reu": "", "fecha_reu": "2026-04-11"}, "TRONEX SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-08"}, "EDEN BISTRO S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-07"}, "RIORION S.A.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-05"}, "TODO BIENES S.A.S.": {"tiene_reunion": false, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": ""}, "GRUPO NUTRY S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}, "ERICK ZAZA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-05"}, "VIDAPET": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-05"}, "AGH": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "GLOBAL AUTOS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "MEDELLIN ADVISORS S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-16"}, "INVERSIONES GG OASIS S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "MANANTIALES EL DORADO": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-31"}, "CONYAS S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "G2 CONSTRUCTORA S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-08"}, "MOLD PLAST S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-10"}, "CONSTRUCTORA ZAU S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-06"}, "CLIENTE AUTOSUR": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-01"}, "FINTECH JESSICA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE", "comentarios_reu": "", "fecha_reu": "2026-04-10"}, "ENDOCA COLOMBIA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA, PENDIENTE", "comentarios_reu": "", "fecha_reu": "2026-04-17"}, "DOS OCEANOS SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-20"}, "CONSTRUCTORA ZAU SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-05-01"}, "933 ASISTENCIA S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-30"}, "GRUPO CANVAS S.A.S": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-17"}, "CAZA CASAS INMOBILIARIA S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-13"}};
-      const reuByNit={"901214227": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}};
+      const reuByName={"ROTOTECH": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-12"}, "TECH 360 - PROYECTO 1": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-03"}, "TECH 360 - PROYECTO 2": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "DESARROLLO INMOBILIARIO EL CARMEN": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "CONSTRUCTORA INMOBILIARIA Y MOBILIARIA DALILA Y ANDREA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "INVERSIONES LUGAL SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-13"}, "SOCIEDAD HOTEL BAMBU MILLA DE ORO S.A.S": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": ""}, "MYC SOLUTIONS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-20"}, "CARIOCA BARBERIA": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-03-31"}, "ENCURTIDOS JAMAICA": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-11"}, "TRONEX SAS": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "PENDIENTE, SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-08"}, "EDEN BISTRO S.A.S.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "SEMILLA", "comentarios_reu": "", "fecha_reu": "2026-04-07"}, "RIORION S.A.": {"tiene_reunion": true, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-05"}, "TODO BIENES S.A.S.": {"tiene_reunion": false, "propuesta": false, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": ""}, "GRUPO NUTRY S.A.S.": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}};
+      const reuByNit={"901214227": {"tiene_reunion": true, "propuesta": true, "cierre": false, "estado_reu": "", "comentarios_reu": "", "fecha_reu": "2026-05-21"}};
       // También leer la hoja en vivo para capturar updates futuros
       const reuRaw=parseRaw(reuT);
       const reuHi=reuRaw.findIndex(r=>r.some(c=>c.trim()==="CLIENTE")&&r.some(c=>c.trim()==="REUNION"||c.trim()==="REUNIÓN"));
@@ -813,17 +817,16 @@ export default function App(){
       });
 
       // ── Empresas que están en REUNIONES Y CIERRE pero NO en BD PRINCIPAL ──
-      // Se agregan como filas adicionales para que ninguna reunión/propuesta/cierre se pierda
-      // por no estar todavía registradas en el BD principal.
+      // Se agregan como filas adicionales (deduplicadas por nombre normalizado para
+      // evitar que se dupliquen al refrescar) para que ninguna reunión/propuesta/cierre
+      // se pierda por no estar todavía registrada en el BD principal.
       const bdNombresNormalizados=new Set(enriched.map(r=>normalizeForMatch(r.cliente.toUpperCase().trim())));
-      const huerfanas=[];
-      let nextId=enriched.length;
+      const huerfanasMap={}; // dedupe by normalized name
       Object.entries(reuByName).forEach(([nombre,reu])=>{
         const norm=normalizeForMatch(nombre);
-        if(!bdNombresNormalizados.has(norm)){
+        if(norm&&!bdNombresNormalizados.has(norm)&&!huerfanasMap[norm]){
           const dd=lookupDD(nombre,"");
-          huerfanas.push({
-            id:nextId++,
+          huerfanasMap[norm]={
             cliente:nombre,
             estado:reu.estado_reu&&reu.estado_reu.toUpperCase().includes("CERRADO")?"SEGUIMIENTO":"",
             quien:"",emis:"",rues:"",interes:"",
@@ -836,12 +839,13 @@ export default function App(){
             cierre:reu.cierre||false,
             estado_reu:reu.estado_reu||"",
             reunion_comentarios:reu.comentarios_reu||"",
-            soloEnReuniones:true, // marca para mostrar un indicador visual si se quiere
-          });
+            soloEnReuniones:true,
+          };
         }
       });
+      const huerfanas=Object.values(huerfanasMap).map((h,i)=>({id:enriched.length+i,...h}));
       if(huerfanas.length>0){
-        console.log(huerfanas.length,"empresas de REUNIONES Y CIERRE no estaban en BD PRINCIPAL — agregadas:",huerfanas.map(h=>h.cliente));
+        console.log(huerfanas.length,"empresas únicas de REUNIONES Y CIERRE no estaban en BD PRINCIPAL — agregadas:",huerfanas.map(h=>h.cliente));
       }
       const enrichedFull=[...enriched,...huerfanas];
 
