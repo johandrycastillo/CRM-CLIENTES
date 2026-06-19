@@ -733,7 +733,34 @@ export default function App(){
           reuByName[nombre]=entry;
         }
       }
-      const lookupReu=(nombre,nit)=>reuByNit[nit]||reuByName[nombre]||null;
+      // Normaliza nombres para matching tolerante: quita acentos, S.A.S/SAS, 
+      // puntuación, espacios extra, y plurales simples (S final tras palabra >3 letras)
+      const normalizeForMatch=(s)=>{
+        if(!s)return"";
+        return s.toUpperCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g,"")  // quita acentos
+          .replace(/[.,]/g,"")
+          .replace(/\bS\.?A\.?S\.?\b/g,"")  // quita S.A.S, SAS, S.A
+          .replace(/\bLTDA\.?\b/g,"")
+          .replace(/[^A-Z0-9 ]/g," ")
+          .replace(/\s+/g," ")
+          .trim();
+      };
+      // Índice normalizado para fallback de fuzzy matching
+      const reuByNormName={};
+      Object.entries(reuByName).forEach(([k,v])=>{
+        const nk=normalizeForMatch(k);
+        if(nk)reuByNormName[nk]=v;
+      });
+      const lookupReu=(nombre,nit)=>{
+        if(nit&&reuByNit[nit])return reuByNit[nit];
+        if(reuByName[nombre])return reuByName[nombre];
+        const norm=normalizeForMatch(nombre);
+        if(norm&&reuByNormName[norm])return reuByNormName[norm];
+        return null;
+      };
+      // Diagnóstico: qué empresas de REUNIONES Y CIERRE no encontraron match en BD
+      window.__reuDebug={reuByName,reuByNit,normalizeForMatch};
 
 
 
@@ -785,9 +812,42 @@ export default function App(){
         };
       });
 
+      // ── Empresas que están en REUNIONES Y CIERRE pero NO en BD PRINCIPAL ──
+      // Se agregan como filas adicionales para que ninguna reunión/propuesta/cierre se pierda
+      // por no estar todavía registradas en el BD principal.
+      const bdNombresNormalizados=new Set(enriched.map(r=>normalizeForMatch(r.cliente.toUpperCase().trim())));
+      const huerfanas=[];
+      let nextId=enriched.length;
+      Object.entries(reuByName).forEach(([nombre,reu])=>{
+        const norm=normalizeForMatch(nombre);
+        if(!bdNombresNormalizados.has(norm)){
+          const dd=lookupDD(nombre,"");
+          huerfanas.push({
+            id:nextId++,
+            cliente:nombre,
+            estado:reu.estado_reu&&reu.estado_reu.toUpperCase().includes("CERRADO")?"SEGUIMIENTO":"",
+            quien:"",emis:"",rues:"",interes:"",
+            contacto1:false,contacto2:false,quePaso:"",
+            fecha:reu.fecha_reu||"",
+            contactoDirecto:"",telefono:"",direccion:"",correo:"",nit:"",notas:"",
+            dd,puntaje:dd?.puntaje||0,clasificacion:dd?.clasificacion||"",
+            tiene_reunion:reu.tiene_reunion||false,
+            propuesta:reu.propuesta||false,
+            cierre:reu.cierre||false,
+            estado_reu:reu.estado_reu||"",
+            reunion_comentarios:reu.comentarios_reu||"",
+            soloEnReuniones:true, // marca para mostrar un indicador visual si se quiere
+          });
+        }
+      });
+      if(huerfanas.length>0){
+        console.log(huerfanas.length,"empresas de REUNIONES Y CIERRE no estaban en BD PRINCIPAL — agregadas:",huerfanas.map(h=>h.cliente));
+      }
+      const enrichedFull=[...enriched,...huerfanas];
+
       // Sort: ALTO POTENCIAL primero, luego por score desc, luego por estado (LLAMAR HOY primero)
       const estadoOrder={"LLAMAR HOY":1,"SEGUIMIENTO":2,"VOLVER A CONTACTAR":3,"":4,"YA NO SEGUIMIENTO":5};
-      enriched.sort((a,b)=>{
+      enrichedFull.sort((a,b)=>{
         const pa=POT_META[a.clasificacion]?.order||5,pb=POT_META[b.clasificacion]?.order||5;
         if(pa!==pb)return pa-pb;
         if(b.puntaje!==a.puntaje)return b.puntaje-a.puntaje;
@@ -795,7 +855,7 @@ export default function App(){
       });
 
       const reuList=Object.values(reuByName);
-      setData(enriched);setReuniones(reuList);
+      setData(enrichedFull);setReuniones(reuList);
       setLastUpdate(new Date().toLocaleTimeString("es-CO"));
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
@@ -945,7 +1005,10 @@ export default function App(){
                             <td style={{padding:"9px 11px",whiteSpace:"nowrap"}}>
                               <Bdg bg={em.bg} color={em.color}>{em.icon} {r.estado||"—"}</Bdg>
                             </td>
-                            <td style={{padding:"9px 11px",fontWeight:600,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente}</td>
+                            <td style={{padding:"9px 11px",fontWeight:600,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              {r.cliente}
+                              {r.soloEnReuniones&&<span title="Solo en hoja REUNIONES Y CIERRE, aún no está en BD PRINCIPAL" style={{marginLeft:5,fontSize:10,color:"#a855f7"}}>🆕</span>}
+                            </td>
                             <td style={{padding:"9px 11px",whiteSpace:"nowrap"}}>
                               {secColor
                                 ? <span style={{background:secColor,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{r.dd.sector}</span>
