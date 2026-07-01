@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radiografía Estratégica Empresarial · Diagnóstico Legal, Fiscal y Patrimonial</title>
+<!-- Importación de la fuente Montserrat desde Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
 <style>
   :root{
     --bg:#F9F9F9;
@@ -16,10 +21,18 @@
     --ok:#2f7d5b;
     --warn:#b98900;
     --crit:#b23a34;
-    --serif:Montserrat, 'Times New Roman', serif;
-    --sans:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Configuración de Montserrat como fuente principal para todo el documento */
+    --serif: 'Montserrat', sans-serif;
+    --sans: 'Montserrat', sans-serif;
   }
 
+  /* Forzar la aplicación global en el body y elementos comunes */
+  body, input, textarea, select, button, p, h1, h2, h3, h4, label {
+    font-family: 'Montserrat', sans-serif !important;
+  }
+</style>
+  
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
