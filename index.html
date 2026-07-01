@@ -4,35 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Radiografía Estratégica Empresarial · Diagnóstico Legal, Fiscal y Patrimonial</title>
-<!-- Importación de la fuente Montserrat desde Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#F9F9F9;
     --ink:#000000;
     --accent:#fac334;
-    --accent-soft:#f2e2da;
+    --accent-soft:#fdf1cc;
+    --accent-ink:#a97a05;
     --muted:#5c5c5c;
-    --line:#e4e0dc;
+    --line:#e6e3dd;
     --card:#ffffff;
     --ok:#2f7d5b;
     --warn:#b98900;
     --crit:#b23a34;
-    
-    /* Configuración de Montserrat como fuente principal para todo el documento */
-    --serif: 'Montserrat', sans-serif;
-    --sans: 'Montserrat', sans-serif;
+    --serif:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sans:'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
 
-  /* Forzar la aplicación global en el body y elementos comunes */
-  body, input, textarea, select, button, p, h1, h2, h3, h4, label {
-    font-family: 'Montserrat', sans-serif !important;
-  }
-</style>
-  
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
@@ -59,7 +50,7 @@
     font-size:12px;
     letter-spacing:.28em;
     text-transform:uppercase;
-    color:var(--accent);
+    color:var(--accent-ink);
     font-weight:700;
     margin:0 0 18px;
   }
@@ -97,7 +88,7 @@
   .section-num{
     font-family:var(--serif);
     font-size:15px;
-    color:var(--accent);
+    color:var(--accent-ink);
     font-weight:700;
     letter-spacing:.05em;
     min-width:28px;
@@ -154,7 +145,7 @@
   select:focus{
     outline:none;
     border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(216,160,140,.22);
+    box-shadow:0 0 0 3px rgba(250,195,52,.30);
   }
 
   /* ---------- Question cards ---------- */
@@ -172,7 +163,7 @@
     gap:10px;
   }
   .q-index{
-    color:var(--accent);
+    color:var(--accent-ink);
     font-family:var(--serif);
     font-weight:700;
     flex:none;
@@ -257,7 +248,7 @@
     font-size:12px;
     letter-spacing:.28em;
     text-transform:uppercase;
-    color:var(--accent);
+    color:var(--accent-ink);
     font-weight:700;
     margin:0 0 14px;
   }
@@ -283,7 +274,7 @@
     font-size:11px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:var(--accent);
+    color:var(--accent-ink);
     font-weight:700;
     margin-bottom:4px;
   }
@@ -401,7 +392,7 @@
     font-size:12px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:var(--accent);
+    color:var(--accent-ink);
     font-weight:700;
     margin:26px 0 10px;
   }
@@ -425,7 +416,7 @@
   .profile ul.measures li:last-child{border-bottom:none;}
   .profile ul.measures li::before{
     content:"—";
-    position:absolute;left:0;top:10px;color:var(--accent);
+    position:absolute;left:0;top:10px;color:var(--accent-ink);
   }
 
   .disclaimer{
