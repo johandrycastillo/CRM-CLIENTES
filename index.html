@@ -1,16 +1,1025 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CRM — Clientes Potenciales</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f8fafc; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiografía Estratégica Empresarial · Diagnóstico Legal, Fiscal y Patrimonial</title>
+<style>
+  :root{
+    --bg:#F9F9F9;
+    --ink:#000000;
+    --accent:#D8A08C;
+    --accent-soft:#f2e2da;
+    --muted:#5c5c5c;
+    --line:#e4e0dc;
+    --card:#ffffff;
+    --ok:#2f7d5b;
+    --warn:#b98900;
+    --crit:#b23a34;
+    --serif:Georgia, 'Times New Roman', serif;
+    --sans:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:0 24px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .masthead{
+    padding:56px 0 40px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:44px;
+  }
+  .brand-eyebrow{
+    font-size:12px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin:0 0 18px;
+  }
+  .masthead h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(28px,5vw,44px);
+    line-height:1.12;
+    margin:0 0 16px;
+    letter-spacing:-.01em;
+  }
+  .masthead p{
+    max-width:620px;
+    color:var(--muted);
+    font-size:16px;
+    margin:0;
+  }
+  .accent-rule{
+    width:64px;
+    height:3px;
+    background:var(--accent);
+    margin:24px 0 0;
+  }
+
+  /* ---------- Sections ---------- */
+  .section{
+    margin-bottom:52px;
+  }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    margin-bottom:8px;
+  }
+  .section-num{
+    font-family:var(--serif);
+    font-size:15px;
+    color:var(--accent);
+    font-weight:700;
+    letter-spacing:.05em;
+    min-width:28px;
+  }
+  .section-head h2{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:24px;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .section-sub{
+    color:var(--muted);
+    font-size:14px;
+    margin:0 0 28px 44px;
+  }
+
+  /* ---------- Form fields ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:22px 28px;
+  }
+  .field{display:flex;flex-direction:column;}
+  .field.full{grid-column:1 / -1;}
+  .field label{
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.02em;
+    margin-bottom:8px;
+  }
+  .field .hint{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:400;
+    margin-left:6px;
+  }
+  input[type="text"],
+  textarea,
+  select{
+    font-family:var(--sans);
+    font-size:15px;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:12px 14px;
+    width:100%;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  textarea{resize:vertical;min-height:88px;}
+  input[type="text"]:focus,
+  textarea:focus,
+  select:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(216,160,140,.22);
+  }
+
+  /* ---------- Question cards ---------- */
+  .q{
+    margin-bottom:26px;
+    padding-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .q:last-child{border-bottom:none;}
+  .q-title{
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 14px;
+    display:flex;
+    gap:10px;
+  }
+  .q-index{
+    color:var(--accent);
+    font-family:var(--serif);
+    font-weight:700;
+    flex:none;
+  }
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .opt{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:13px 15px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:3px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover{border-color:var(--accent);}
+  .opt input{
+    margin:0;
+    margin-top:3px;
+    accent-color:var(--accent);
+    flex:none;
+    width:16px;height:16px;
+  }
+  .opt span{font-size:14.5px;color:#1c1c1c;}
+  .opt.selected{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+
+  /* ---------- Buttons ---------- */
+  .actions{
+    margin-top:8px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:var(--sans);
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.02em;
+    padding:14px 30px;
+    border-radius:2px;
+    cursor:pointer;
+    border:1px solid var(--ink);
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{
+    background:var(--ink);
+    color:#fff;
+  }
+  .btn-primary:hover{background:#1f1f1f;}
+  .btn-secondary{
+    background:transparent;
+    color:var(--ink);
+    border-color:var(--accent);
+  }
+  .btn-secondary:hover{background:var(--accent-soft);}
+
+  .form-error{
+    display:none;
+    margin-top:18px;
+    padding:12px 16px;
+    border-left:3px solid var(--crit);
+    background:#fbeceb;
+    color:#7a2621;
+    font-size:14px;
+  }
+  .form-error.show{display:block;}
+
+  /* ---------- Report ---------- */
+  #report{display:none;}
+  .report-masthead{
+    padding:8px 0 32px;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:36px;
+  }
+  .report-eyebrow{
+    font-size:12px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin:0 0 14px;
+  }
+  .report-masthead h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(26px,4.5vw,38px);
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  .report-masthead .co{
+    font-size:16px;
+    color:var(--muted);
+  }
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px 32px;
+    margin-bottom:40px;
+  }
+  .meta-item .k{
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .meta-item .v{
+    font-size:15px;
+    color:var(--ink);
+    white-space:pre-wrap;
+  }
+
+  .score-block{margin-bottom:40px;}
+  .score-topline{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:12px;
+  }
+  .score-topline .label{
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .score-topline .pct{
+    font-family:var(--serif);
+    font-size:30px;
+  }
+  .bar-track{
+    width:100%;
+    height:14px;
+    background:#eceae7;
+    border-radius:20px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    width:0;
+    background:var(--accent);
+    border-radius:20px;
+    transition:width 1.1s cubic-bezier(.22,.61,.36,1);
+  }
+  .score-detail{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .report-section{margin-bottom:40px;}
+  .report-section h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:21px;
+    margin:0 0 4px;
+  }
+  .report-section .rs-rule{
+    width:44px;height:2px;background:var(--accent);margin-bottom:18px;
+  }
+
+  ul.findings{list-style:none;margin:0;padding:0;}
+  ul.findings li{
+    position:relative;
+    padding:11px 0 11px 26px;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+  }
+  ul.findings li:last-child{border-bottom:none;}
+  ul.findings li::before{
+    position:absolute;
+    left:0;top:12px;
+    font-family:var(--serif);
+    font-weight:700;
+  }
+  ul.strengths li::before{content:"+";color:var(--ok);}
+  ul.alerts li::before{content:"!";color:var(--crit);}
+  li .sev{
+    display:inline-block;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:2px;
+    margin-right:9px;
+    vertical-align:middle;
+  }
+  .sev-mod{background:#fdf3da;color:#8a6800;}
+  .sev-crit{background:#fbeceb;color:#8f2c26;}
+  .empty-note{font-size:14px;color:var(--muted);font-style:italic;margin:2px 0 0;}
+
+  /* ---------- Profile card ---------- */
+  .profile{
+    border:1px solid var(--line);
+    border-top:5px solid var(--accent);
+    background:var(--card);
+    padding:32px 30px;
+  }
+  .profile-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .dot{width:12px;height:12px;border-radius:50%;flex:none;}
+  .profile h3{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(21px,3.5vw,27px);
+    line-height:1.2;
+    margin:0 0 20px;
+  }
+  .profile h4{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin:26px 0 10px;
+  }
+  .profile p.diag{
+    font-size:15px;
+    color:#1c1c1c;
+    text-align:justify;
+    margin:0;
+  }
+  .profile ul.measures{
+    margin:0;
+    padding:0;
+    list-style:none;
+  }
+  .profile ul.measures li{
+    position:relative;
+    padding:10px 0 10px 24px;
+    font-size:14.5px;
+    border-bottom:1px solid var(--line);
+  }
+  .profile ul.measures li:last-child{border-bottom:none;}
+  .profile ul.measures li::before{
+    content:"—";
+    position:absolute;left:0;top:10px;color:var(--accent);
+  }
+
+  .disclaimer{
+    margin-top:44px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+    font-size:11.5px;
+    line-height:1.6;
+    color:var(--muted);
+    text-align:justify;
+  }
+  .disclaimer strong{color:#2b2b2b;}
+
+  .report-actions{
+    margin:36px 0 0;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:640px){
+    .grid, .meta-grid{grid-template-columns:1fr;}
+    .wrap{padding:0 18px 60px;}
+    .masthead{padding:36px 0 28px;}
+    .score-topline .pct{font-size:24px;}
+  }
+
+  /* ---------- Print / PDF (Carta) ---------- */
+  @media print{
+    @page{size:Letter;margin:16mm 15mm;}
+    body{background:#fff;font-size:11pt;}
+    .wrap{max-width:none;padding:0;margin:0;}
+    #form-view, .report-actions, .form-error{display:none !important;}
+    #report{display:block !important;}
+    .report-masthead{border-bottom:2px solid #000;}
+    .profile{
+      border:1px solid #bbb;
+      border-top:4px solid var(--accent);
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    .report-section{break-inside:avoid;page-break-inside:avoid;}
+    .score-block{break-inside:avoid;}
+    .profile h4{break-after:avoid;}
+    .bar-fill{transition:none;}
+    .disclaimer{break-inside:avoid;page-break-inside:avoid;}
+    .profile-page-break{break-before:page;page-break-before:always;}
+    a{color:#000;text-decoration:none;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================== FORM VIEW =================== -->
+  <div id="form-view">
+
+    <header class="masthead">
+      <p class="brand-eyebrow">Consultoría Corporativa · Legal · Fiscal · Patrimonial</p>
+      <h1>Radiografía Estratégica<br>de Blindaje Empresarial</h1>
+      <p>Diagnóstico interactivo de exposición patrimonial, cumplimiento normativo y eficiencia estructural para sociedades en Colombia. Responda cada campo con la información real de su compañía para obtener un perfil técnico-jurídico preliminar.</p>
+      <div class="accent-rule"></div>
+    </header>
+
+    <!-- SECCIÓN 1 -->
+    <section class="section">
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <h2>Identificación de la Compañía</h2>
+      </div>
+      <p class="section-sub">Datos que personalizan el resumen ejecutivo del reporte.</p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="razonSocial">Razón Social</label>
+          <input type="text" id="razonSocial" placeholder="Ej. Comercializadora Andina S.A.S.">
+        </div>
+        <div class="field">
+          <label for="responsable">Nombre y Cargo del Responsable</label>
+          <input type="text" id="responsable" placeholder="Ej. María López · Gerente General">
+        </div>
+        <div class="field">
+          <label for="trabajadores">Número de Trabajadores</label>
+          <select id="trabajadores">
+            <option value="">Seleccione…</option>
+            <option value="Microoperación">Microoperación (1–10)</option>
+            <option value="Pequeña">Pequeña (11–50)</option>
+            <option value="Mediana">Mediana (51–200)</option>
+            <option value="Grande">Grande (más de 200)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="visionInput">Visión / Objetivo estratégico <span class="hint">(opcional)</span></label>
+          <input type="text" id="visionInput" placeholder="Ej. Ser líder regional en 5 años">
+        </div>
+        <div class="field full">
+          <label for="experiencia">Experiencia histórica de la empresa <span class="hint">(opcional)</span></label>
+          <textarea id="experiencia" placeholder="Trayectoria, hitos relevantes, contingencias enfrentadas…"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2 -->
+    <section class="section">
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <h2>Mercado y Posicionamiento</h2>
+      </div>
+      <p class="section-sub">Sostenibilidad de la demanda, presión competitiva y diferenciación.</p>
+      <div id="sec2" class="q-list"></div>
+    </section>
+
+    <!-- SECCIÓN 3 -->
+    <section class="section">
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <h2>Estructura Legal y Cumplimiento</h2>
+      </div>
+      <p class="section-sub">Blindaje societario, gobierno corporativo, compliance y activos intangibles.</p>
+      <div id="sec3" class="q-list"></div>
+    </section>
+
+    <!-- SECCIÓN 4 -->
+    <section class="section">
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <h2>Salud Financiera y Patrimonial</h2>
+      </div>
+      <p class="section-sub">Control de márgenes, gestión de excedentes, proyección patrimonial y apalancamiento.</p>
+      <div id="sec4" class="q-list"></div>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btnGenerar">Generar Diagnóstico</button>
+    </div>
+    <div class="form-error" id="formError"></div>
+
+  </div>
+
+  <!-- =================== REPORT VIEW =================== -->
+  <div id="report">
+    <header class="report-masthead">
+      <p class="report-eyebrow">Reporte de Diagnóstico Preliminar</p>
+      <h1 id="rTitulo">Radiografía Estratégica Empresarial</h1>
+      <div class="co" id="rSubtitulo"></div>
+    </header>
+
+    <!-- Resumen ejecutivo / metadatos -->
+    <div class="report-section">
+      <h3>Resumen Ejecutivo</h3>
+      <div class="rs-rule"></div>
+      <div class="meta-grid" id="rMeta"></div>
+    </div>
+
+    <!-- Barra de blindaje -->
+    <div class="score-block">
+      <div class="score-topline">
+        <span class="label">Índice de Blindaje Corporativo</span>
+        <span class="pct" id="rPct">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="rBar"></div></div>
+      <div class="score-detail" id="rScoreDetail"></div>
+    </div>
+
+    <!-- Fortalezas -->
+    <div class="report-section">
+      <h3>Fortalezas Identificadas</h3>
+      <div class="rs-rule"></div>
+      <ul class="findings strengths" id="rFortalezas"></ul>
+    </div>
+
+    <!-- Falencias -->
+    <div class="report-section">
+      <h3>Falencias y Alertas Críticas</h3>
+      <div class="rs-rule"></div>
+      <ul class="findings alerts" id="rFalencias"></ul>
+    </div>
+
+    <!-- Perfil -->
+    <div class="report-section profile-page-break">
+      <div class="profile" id="rProfile">
+        <div class="profile-tag" id="rProfileTag"></div>
+        <h3 id="rProfileTitle"></h3>
+        <h4>Diagnóstico Técnico</h4>
+        <p class="diag" id="rProfileDiag"></p>
+        <h4 id="rMeasuresLabel">Medidas Legales e Inmediatas a Implementar</h4>
+        <ul class="measures" id="rProfileMeasures"></ul>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>EXENCIÓN DE RESPONSABILIDAD (DISCLAIMER):</strong> El presente documento constituye una radiografía estratégica preliminar con fines estrictamente informativos y pedagógicos, generada de manera automatizada a partir de las declaraciones suministradas por el usuario en esta etapa de primer contacto. Este reporte no constituye, ni reemplaza, un dictamen legal integral, una auditoría fiscal (Due Diligence) o un concepto jurídico vinculante. Los resultados reflejan un análisis de aproximación inicial y, por ende, la firma consultora se excluye de cualquier responsabilidad legal, contractual o extracontractual derivada de las decisiones comerciales, financieras o corporativas que la compañía adopte con base en este documento, requiriéndose en todo caso una contratación e investigación formal de antecedentes para la emisión de conceptos en firme.
+    </div>
+
+    <div class="report-actions">
+      <button type="button" class="btn btn-primary" id="btnPrint">Descargar Reporte en PDF</button>
+      <button type="button" class="btn btn-secondary" id="btnVolver">Volver al Formulario</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   DATOS DEL CUESTIONARIO (Secciones 2, 3 y 4 — 12 preguntas)
+   Cada opción: puntos + textos de fortaleza / riesgo.
+   Puntos: opción 1 = 5 | opción 2 = 3 | opción 3 = 1
+   ========================================================= */
+const QUESTIONS = [
+  /* ---------- SECCIÓN 2 · MERCADO ---------- */
+  {
+    id:"m1", sec:"sec2", label:"Demanda",
+    q:"¿Cómo se comporta la demanda de sus productos o servicios?",
+    opts:[
+      {t:"Demanda sostenida y creciente, con proyección validada de mercado.", p:5,
+       s:"Demanda sostenida y creciente que respalda la proyección del negocio."},
+      {t:"Demanda estable pero dependiente de temporadas o de pocos clientes.", p:3,
+       r:"Dependencia de estacionalidad o concentración en pocos clientes: riesgo de concentración de ingresos."},
+      {t:"Demanda irregular o decreciente, sin pronóstico claro.", p:1,
+       r:"Demanda irregular sin pronóstico: alta vulnerabilidad del flujo de caja e insostenibilidad operativa."}
+    ]
+  },
+  {
+    id:"m2", sec:"sec2", label:"Saturación / Competencia",
+    q:"¿Cuál es el nivel de saturación y competencia en su sector?",
+    opts:[
+      {t:"Mercado con espacio de crecimiento y barreras de entrada a su favor.", p:5,
+       s:"Posición de mercado con espacio de crecimiento y barreras de entrada favorables."},
+      {t:"Mercado competido donde compite principalmente por precio.", p:3,
+       r:"Competencia por precio: presión sobre los márgenes y baja fidelización del cliente."},
+      {t:"Mercado saturado, con guerra de precios y márgenes erosionados.", p:1,
+       r:"Mercado saturado en guerra de precios: erosión estructural de la rentabilidad."}
+    ]
+  },
+  {
+    id:"m3", sec:"sec2", label:"Diferenciación",
+    q:"¿Qué tan diferenciada está su propuesta de valor?",
+    opts:[
+      {t:"Propuesta única y difícil de replicar (marca, tecnología o know-how).", p:5,
+       s:"Propuesta de valor diferenciada y difícil de replicar por la competencia."},
+      {t:"Diferenciación parcial, replicable por competidores en el mediano plazo.", p:3,
+       r:"Diferenciación replicable: riesgo de pérdida de ventaja competitiva en el mediano plazo."},
+      {t:"Sin diferenciación clara; el cliente percibe la oferta como un commodity.", p:1,
+       r:"Oferta percibida como commodity: exposición a sustitución inmediata por la competencia."}
+    ]
+  },
+
+  /* ---------- SECCIÓN 3 · LEGAL ---------- */
+  {
+    id:"l1", sec:"sec3", label:"Estructura interna",
+    q:"¿Cómo está estructurada internamente la sociedad y la separación de patrimonios?",
+    opts:[
+      {t:"Sociedad formalizada (ej. S.A.S.) con clara separación patrimonio–empresa y órganos definidos.", p:5,
+       s:"Separación patrimonial clara entre la sociedad y sus accionistas."},
+      {t:"Sociedad constituida, pero con mezcla frecuente de gastos y patrimonio personal.", p:3,
+       r:"Co-mezcla de gastos personales y sociales: permeabilidad del velo corporativo."},
+      {t:"Operación como persona natural o estructura informal, sin límite de responsabilidad.", p:1,
+       r:"Operación sin límite de responsabilidad: exposición del patrimonio personal a los pasivos del negocio (responsabilidad ilimitada)."}
+    ]
+  },
+  {
+    id:"l2", sec:"sec3", label:"Acuerdo de socios",
+    q:"¿Existe un acuerdo de accionistas o socios vinculante?",
+    opts:[
+      {t:"Acuerdo de accionistas robusto, con cláusulas de salida, sucesión y resolución de conflictos.", p:5,
+       s:"Gobierno societario blindado mediante acuerdo de accionistas vinculante."},
+      {t:"Solo estatutos genéricos, sin acuerdo de accionistas específico.", p:3,
+       r:"Ausencia de acuerdo de accionistas: riesgo de parálisis corporativa ante disensos o eventos sucesorios."},
+      {t:"No existe ningún acuerdo; las reglas son verbales o informales.", p:1,
+       r:"Reglas societarias informales: alto riesgo de litigio interno y bloqueo decisional."}
+    ]
+  },
+  {
+    id:"l3", sec:"sec3", label:"SAGRILAFT / PTEE",
+    q:"¿Cuenta con manuales de cumplimiento (SAGRILAFT / PTEE)?",
+    opts:[
+      {t:"Manuales implementados, oficial de cumplimiento designado y controles operando.", p:5,
+       s:"Cumplimiento SAGRILAFT/PTEE implementado y en operación."},
+      {t:"Conoce la obligación, pero la implementación está incompleta o desactualizada.", p:3,
+       r:"Implementación incompleta de compliance: riesgo sancionatorio ante entes de supervisión."},
+      {t:"No cuenta con políticas de cumplimiento, pese a estar (o poder llegar a estar) obligada.", p:1,
+       r:"Ausencia de políticas de cumplimiento: exposición a sanciones de Supersociedades y riesgo reputacional."}
+    ]
+  },
+  {
+    id:"l4", sec:"sec3", label:"Registro de marca",
+    q:"¿Sus activos intangibles (marca) están protegidos ante la SIC?",
+    opts:[
+      {t:"Marca(s) registrada(s) y vigente(s) ante la Superintendencia de Industria y Comercio.", p:5,
+       s:"Activos intangibles (marca) protegidos y registrados ante la SIC."},
+      {t:"Marca en trámite o usada sin registro formal consolidado.", p:3,
+       r:"Marca sin registro consolidado: riesgo de disputa y de pérdida del goodwill."},
+      {t:"No hay ningún registro; la marca opera sin protección legal alguna.", p:1,
+       r:"Marca desprotegida: exposición a usurpación y pérdida total del activo intangible."}
+    ]
+  },
+  {
+    id:"l5", sec:"sec3", label:"Acompañamiento legal",
+    q:"¿Qué acompañamiento legal o corporativo tiene actualmente?",
+    opts:[
+      {t:"Asesoría legal preventiva y permanente, integrada a la toma de decisiones.", p:5,
+       s:"Asesoría legal preventiva integrada a la toma de decisiones."},
+      {t:"Asesoría ocasional, contratada solo cuando surge un problema puntual.", p:3,
+       r:"Asesoría reactiva y ocasional: gestión de riesgos por crisis (administración reactiva)."},
+      {t:"No cuenta con acompañamiento legal; todo se resuelve de forma reactiva o interna.", p:1,
+       r:"Sin acompañamiento legal: contingencias no detectadas ni mitigadas oportunamente."}
+    ]
+  },
+
+  /* ---------- SECCIÓN 4 · FINANCIERA ---------- */
+  {
+    id:"f1", sec:"sec4", label:"Margen neto",
+    q:"¿Tiene visibilidad y control sobre su margen neto real?",
+    opts:[
+      {t:"Margen neto medido con precisión y monitoreado periódicamente por indicadores.", p:5,
+       s:"Control preciso y monitoreo periódico del margen neto."},
+      {t:"Conoce el margen de forma aproximada, sin control mensual riguroso.", p:3,
+       r:"Visibilidad aproximada del margen: decisiones sin sustento financiero riguroso."},
+      {t:"No tiene claridad sobre su margen neto real de utilidad.", p:1,
+       r:"Sin claridad del margen neto: riesgo de operar en pérdida sin advertirlo a tiempo."}
+    ]
+  },
+  {
+    id:"f2", sec:"sec4", label:"Gestión de excedentes",
+    q:"¿Cómo gestiona los excedentes de liquidez o tesorería?",
+    opts:[
+      {t:"Excedentes invertidos en vehículos regulados que protegen el poder adquisitivo.", p:5,
+       s:"Excedentes rentabilizados en vehículos regulados que protegen el capital."},
+      {t:"Excedentes en cuentas corrientes o de ahorro, sin estrategia de rentabilización.", p:3,
+       r:"Excedentes líquidos ociosos en cuentas operativas: erosión inflacionaria del capital."},
+      {t:"No hay excedentes gestionados; la caja se consume sin planificación.", p:1,
+       r:"Caja sin planificación: elevado coste de oportunidad y descapitalización progresiva."}
+    ]
+  },
+  {
+    id:"f3", sec:"sec4", label:"Proyección patrimonial",
+    q:"¿Existe una estructura de aislamiento y proyección del patrimonio (holding, fiducia o sucesión)?",
+    opts:[
+      {t:"Patrimonio con vehículos de aislamiento (holding/fiducia) y plan sucesorio definido.", p:5,
+       s:"Patrimonio aislado mediante estructuras de segunda generación y plan sucesorio."},
+      {t:"Patrimonio parcialmente ordenado, sin estructura de segunda generación.", p:3,
+       r:"Patrimonio parcialmente ordenado: utilidades retenidas expuestas a contingencias de la operación."},
+      {t:"Patrimonio personal y empresarial expuesto, sin planificación patrimonial ni sucesoria.", p:1,
+       r:"Patrimonio personal y empresarial expuesto: riesgo integral ante contingencias y sucesión judicial."}
+    ]
+  },
+  {
+    id:"f4", sec:"sec4", label:"Estructuras de financiamiento",
+    q:"¿Cómo accede a financiamiento y estructura su apalancamiento?",
+    opts:[
+      {t:"Acceso a financiamiento estructurado y planificado según su costo de capital.", p:5,
+       s:"Apalancamiento planificado en función del costo de capital."},
+      {t:"Financiamiento reactivo (créditos puntuales) según la necesidad inmediata.", p:3,
+       r:"Financiamiento reactivo: costo financiero subóptimo y presión recurrente de liquidez."},
+      {t:"Depende de recursos propios o de financiamiento informal de alto costo.", p:1,
+       r:"Dependencia de financiamiento informal de alto costo: riesgo de asfixia financiera."}
+    ]
+  }
+];
+
+/* =========================================================
+   PERFILES TÉCNICO-JURÍDICOS
+   ========================================================= */
+const PROFILES = [
+  {
+    min:12, max:25, color:"#b23a34", icon:"🔴",
+    label:"Nivel de Riesgo · Crítico",
+    title:"Exposición Patrimonial Crítica y Desalineación Estructural",
+    diag:"La compañía presenta una severa vulnerabilidad por inobservancia normativa y total permeabilidad del velo corporativo. Existe una co-mezcla latente entre el riesgo operativo del negocio y el patrimonio personal de los accionistas (exposición a responsabilidad solidaria o ilimitada). La ausencia de políticas de cumplimiento (SAGRILAFT/PTEE) e inexistencia de blindaje de activos inmateriales (marcas) sitúan a la sociedad en un escenario de inminente riesgo sancionatorio por entes de supervisión y control (Supersociedades / SIC) y contingencias de alto impacto por pasivos laborales reales encubiertos bajo la modalidad de prestación de servicios o administración delegada defectuosa.",
+    measuresLabel:"Medidas Legales e Inmediatas a Implementar",
+    measures:[
+      "Implementación urgente de un Plan de Remediación y Due Diligence Legal/Fiscal integral.",
+      "Segregación patrimonial inmediata y reestructuración societaria básica para el aislamiento del riesgo operativo.",
+      "Adopción e implementación de Manuales de Cumplimiento Obligatorio (SAGRILAFT/PTEE) y actualización estricta del Reglamento Interno de Trabajo (RIT) para mitigar el riesgo de contratos realidad.",
+      "Inicio inmediato del trámite de registro marcario ante la SIC para salvaguardar el goodwill y los activos intangibles de la sociedad."
+    ]
+  },
+  {
+    min:26, max:40, color:"#b98900", icon:"🟡",
+    label:"Nivel de Riesgo · Moderado",
+    title:"Estructura Operativa Reactiva y Desacople de Control Preventivo",
+    diag:"Organización en etapa de tracción comercial que opera bajo un modelo de mitigación reactiva (\"administración por crisis\"). El principal foco de riesgo es la 'Gerencia-dependencia' y la ausencia de un Gobierno Corporativo formalizado (estatutos genéricos sin acuerdos de accionistas robustos), lo que eleva el riesgo de parálisis corporativa ante disensos societarios o eventos sucesorios. Financieramente, existe un desacople entre la contabilidad de causación/devengo fiscal y la toma de decisiones estratégicas, sumado a una exposición moderada a requerimientos territoriales por indebida determinación de la sujeción pasiva en el Impuesto de Industria y Comercio (ICA) municipal.",
+    measuresLabel:"Medidas Legales e Inmediatas a Implementar",
+    measures:[
+      "Redacción e implementación de un Acuerdo de Accionistas (Prenda de Socios) vinculante con cláusulas de salida, tag-along/drag-along y resolución de conflictos internos.",
+      "Institucionalización de la compañía mediante manuales de funciones corporativas, delegación de autoridad y establecimiento de KPIs por áreas.",
+      "Auditoría preventiva de territorialidad del ICA y conciliación fiscal para optimizar de forma lícita la tasa efectiva de tributación (ETR).",
+      "Formalización preventiva de la contratación comercial con proveedores y clientes mediante contratos tipo con cláusulas blindadas de limitación de responsabilidad y penalidades indexadas."
+    ]
+  },
+  {
+    min:41, max:52, color:"#2f6f9e", icon:"🔵",
+    label:"Nivel de Riesgo · Optimizable",
+    title:"Madurez Estructural con Coste de Oportunidad Financiera y Patrimonial",
+    diag:"La sociedad evidencia un adecuado estándar de cumplimiento normativo y orden legal interno aceptable. No obstante, se identifica una suboptimización del capital y un elevado coste de oportunidad en la gestión de tesorería (excedentes líquidos ociosos en cuentas operativas corrientes expuestos a la erosión inflacionaria). Asimismo, el patrimonio acumulado carece de un vehículo de aislamiento de riesgos de segunda generación (desprotección del holding de inversión), manteniendo expuestas las utilidades retenidas e históricas ante contingencias extraordinarias de la operación comercial principal de la empresa.",
+    measuresLabel:"Medidas Legales y Medidas Avanzadas a Implementar",
+    measures:[
+      "Arquitectura Corporativa de Segunda Generación: planificación e implementación de una estructura de Holding Empresarial mediante la reorganización por intercambio de acciones o segregación, para centralizar la propiedad y mitigar riesgos cruzados entre unidades de negocio.",
+      "Mecanismos de Aislamiento Patrimonial: constitución de patrimonios autónomos a través de Contratos de Fiducia Mercantil de Administración y Protección Patrimonial, aislando activos fijos e inmuebles core del riesgo operativo comercial.",
+      "Ingeniería Jurídico-Fiscal de Excedentes: implementación de esquemas lícitos de capitalización de utilidades retenidas y optimización de la tasa efectiva mediante dividendos, estructurando políticas corporativas de inversión en vehículos financieros regulados que protejan la caja de la pérdida de valor adquisitivo.",
+      "Planificación Sucesoria Estructurada: elaboración conjunta de un Protocolo de Familia y un Fideicomiso Civil Sucesorio para garantizar la continuidad del negocio y la transferencia ordenada del patrimonio sin necesidad de procesos de sucesión judiciales."
+    ]
+  },
+  {
+    min:53, max:60, color:"#2f7d5b", icon:"🟢",
+    label:"Nivel de Riesgo · Sólido",
+    title:"Sólido Blindaje Corporativo y Eficiencia Estructural Superior",
+    diag:"La compañía opera bajo los más altos estándares de Gobierno Corporativo, Gestión de Riesgos y Eficiencia Financiera. Cuenta con un ecosistema robusto de prevención de contingencias (Compliance al día, marcas protegidas, contratos realidad mitigados) y un control estricto de sus márgenes de utilidad netos. El riesgo de afectación patrimonial es mínimo gracias a la correcta delimitación de responsabilidades y segregación de activos estructurales.",
+    measuresLabel:"Medidas Legales e Inmediatas a Implementar",
+    measures:[
+      "Auditoría corporativa regular y mantenimiento preventivo periódico del portafolio legal y fiscal.",
+      "Sofisticación continua de las estructuras de inversión colectiva y optimización tributaria internacional (si aplica).",
+      "Monitoreo normativo proactivo ante reformas legales nacionales (laborales, tributarias) para la actualización oportuna de las matrices de riesgo de la organización."
+    ]
+  }
+];
+
+/* =========================================================
+   RENDER DEL FORMULARIO (Secciones 2, 3, 4)
+   ========================================================= */
+(function renderForm(){
+  QUESTIONS.forEach((question, i)=>{
+    const container = document.getElementById(question.sec);
+    const wrap = document.createElement('div');
+    wrap.className = 'q';
+
+    const title = document.createElement('div');
+    title.className = 'q-title';
+    title.innerHTML = '<span class="q-index">'+(i+1)+'.</span><span>'+question.q+'</span>';
+    wrap.appendChild(title);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+
+    question.opts.forEach((opt, oi)=>{
+      const lab = document.createElement('label');
+      lab.className = 'opt';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = question.id;
+      input.value = opt.p;
+      input.dataset.optindex = oi;
+      const span = document.createElement('span');
+      span.textContent = opt.t;
+      lab.appendChild(input);
+      lab.appendChild(span);
+
+      input.addEventListener('change', ()=>{
+        opts.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+        lab.classList.add('selected');
+      });
+
+      opts.appendChild(lab);
+    });
+
+    wrap.appendChild(opts);
+    container.appendChild(wrap);
+  });
+})();
+
+/* =========================================================
+   GENERAR DIAGNÓSTICO
+   ========================================================= */
+function esc(str){
+  return (str||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+document.getElementById('btnGenerar').addEventListener('click', ()=>{
+  const errBox = document.getElementById('formError');
+  const razonSocial = document.getElementById('razonSocial').value.trim();
+  const responsable = document.getElementById('responsable').value.trim();
+  const trabajadores = document.getElementById('trabajadores').value;
+  const vision = document.getElementById('visionInput').value.trim();
+  const experiencia = document.getElementById('experiencia').value.trim();
+
+  // --- Validación ---
+  const missing = [];
+  if(!razonSocial) missing.push('Razón Social');
+  if(!responsable) missing.push('Nombre y Cargo del Responsable');
+  if(!trabajadores) missing.push('Número de Trabajadores');
+
+  const unanswered = QUESTIONS.filter(q => !document.querySelector('input[name="'+q.id+'"]:checked'));
+
+  if(missing.length || unanswered.length){
+    let msg = '';
+    if(missing.length) msg += 'Complete los campos obligatorios: ' + missing.join(', ') + '. ';
+    if(unanswered.length) msg += 'Responda las ' + unanswered.length + ' pregunta(s) pendiente(s) en las secciones de selección.';
+    errBox.textContent = msg;
+    errBox.classList.add('show');
+    const firstUn = unanswered[0];
+    const target = firstUn ? document.querySelector('input[name="'+firstUn.id+'"]').closest('.q')
+                           : document.getElementById('razonSocial');
+    if(target) target.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  errBox.classList.remove('show');
+
+  // --- Cálculo de puntaje + fortalezas / falencias ---
+  let total = 0;
+  const strengths = [];
+  const alerts = [];
+
+  QUESTIONS.forEach(q=>{
+    const checked = document.querySelector('input[name="'+q.id+'"]:checked');
+    const points = parseInt(checked.value, 10);
+    const opt = q.opts[parseInt(checked.dataset.optindex, 10)];
+    total += points;
+
+    if(points === 5 && opt.s){
+      strengths.push({label:q.label, text:opt.s});
+    } else if((points === 3 || points === 1) && opt.r){
+      alerts.push({label:q.label, text:opt.r, sev:points});
+    }
+  });
+
+  const pct = Math.round(total / 60 * 100);
+  const profile = PROFILES.find(p => total >= p.min && total <= p.max) || PROFILES[0];
+
+  // --- Rellenar reporte ---
+  document.getElementById('rTitulo').textContent = razonSocial;
+  document.getElementById('rSubtitulo').textContent =
+    'Diagnóstico técnico-jurídico preliminar · Emitido el ' + fechaHoy();
+
+  // Metadatos
+  const meta = [
+    {k:'Razón Social', v:razonSocial},
+    {k:'Responsable', v:responsable},
+    {k:'Tamaño de la operación', v:trabajadores},
+    {k:'Visión estratégica', v: vision || '—'},
+  ];
+  const metaEl = document.getElementById('rMeta');
+  metaEl.innerHTML = meta.map(m =>
+    '<div class="meta-item"><div class="k">'+esc(m.k)+'</div><div class="v">'+esc(m.v)+'</div></div>'
+  ).join('');
+  if(experiencia){
+    metaEl.innerHTML += '<div class="meta-item" style="grid-column:1/-1;"><div class="k">Experiencia histórica</div><div class="v">'+esc(experiencia)+'</div></div>';
+  }
+
+  // Puntaje
+  document.getElementById('rPct').textContent = pct + '%';
+  document.getElementById('rScoreDetail').textContent =
+    'Puntaje obtenido: ' + total + ' / 60 puntos · ' + profile.label;
+
+  // Fortalezas
+  const fortEl = document.getElementById('rFortalezas');
+  if(strengths.length){
+    fortEl.innerHTML = strengths.map(f =>
+      '<li><strong>'+esc(f.label)+':</strong> '+esc(f.text)+'</li>'
+    ).join('');
+  } else {
+    fortEl.innerHTML = '<li class="empty-note">No se identificaron prácticas alineadas con estándares óptimos en esta etapa. La totalidad de las áreas evaluadas requieren intervención prioritaria.</li>';
+  }
+
+  // Falencias (ordena críticas primero)
+  const falEl = document.getElementById('rFalencias');
+  if(alerts.length){
+    alerts.sort((a,b)=>a.sev - b.sev); // 1 (crítico) antes que 3 (moderado)
+    falEl.innerHTML = alerts.map(a =>{
+      const badge = a.sev === 1
+        ? '<span class="sev sev-crit">Crítico</span>'
+        : '<span class="sev sev-mod">Moderado</span>';
+      return '<li>'+badge+'<strong>'+esc(a.label)+':</strong> '+esc(a.text)+'</li>';
+    }).join('');
+  } else {
+    falEl.innerHTML = '<li class="empty-note">No se detectaron falencias relevantes. La compañía mantiene un estándar homogéneo de blindaje en todas las áreas evaluadas.</li>';
+  }
+
+  // Perfil
+  document.getElementById('rProfileTag').innerHTML =
+    '<span class="dot" style="background:'+profile.color+';"></span>' + esc(profile.label);
+  document.getElementById('rProfile').style.borderTopColor = profile.color;
+  document.getElementById('rProfileTitle').textContent = profile.icon + '  ' + profile.title;
+  document.getElementById('rProfileDiag').textContent = profile.diag;
+  document.getElementById('rMeasuresLabel').textContent = profile.measuresLabel;
+  document.getElementById('rProfileMeasures').innerHTML =
+    profile.measures.map(m => '<li>'+esc(m)+'</li>').join('');
+
+  // Barra de acento con color del perfil
+  const bar = document.getElementById('rBar');
+  bar.style.background = profile.color;
+
+  // --- Mostrar reporte ---
+  document.getElementById('form-view').style.display = 'none';
+  document.getElementById('report').style.display = 'block';
+  window.scrollTo({top:0, behavior:'auto'});
+
+  // Animar barra tras el reflow
+  bar.style.width = '0%';
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ bar.style.width = pct + '%'; }); });
+});
+
+function fechaHoy(){
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const d = new Date();
+  return d.getDate() + ' de ' + meses[d.getMonth()] + ' de ' + d.getFullYear();
+}
+
+/* --- Acciones del reporte --- */
+document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+document.getElementById('btnVolver').addEventListener('click', ()=>{
+  document.getElementById('report').style.display = 'none';
+  document.getElementById('form-view').style.display = 'block';
+  window.scrollTo({top:0, behavior:'auto'});
+});
+</script>
+</body>
 </html>
