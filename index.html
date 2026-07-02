@@ -187,6 +187,21 @@
   .disclaimer strong{color:#3a3f42;}
   .report-actions{margin:36px 0 0;display:flex;gap:14px;flex-wrap:wrap;}
 
+  /* ---------- Range slider ---------- */
+  .range-wrap{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:16px 16px 12px;}
+  input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:5px;background:var(--line);outline:none;margin:6px 0;}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.28);cursor:pointer;}
+  input[type="range"]::-moz-range-thumb{width:20px;height:20px;border:2px solid #fff;border-radius:50%;background:var(--accent);cursor:pointer;}
+  .range-val{margin-top:12px;font-size:18px;font-weight:700;color:var(--ink);}
+  .range-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;}
+
+  /* ---------- Radios horizontales ---------- */
+  .radio-h{display:flex;gap:12px;}
+  .rh{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:12px;border:1px solid var(--line);border-radius:3px;background:var(--card);cursor:pointer;transition:border-color .15s ease, background .15s ease;font-size:14.5px;font-weight:600;}
+  .rh:hover{border-color:var(--accent);}
+  .rh input{accent-color:var(--accent);margin:0;width:16px;height:16px;}
+  .rh.selected{border-color:var(--accent);background:var(--accent-soft);}
+
   /* ---------- Responsive ---------- */
   @media (max-width:640px){
     .grid,.meta-grid{grid-template-columns:1fr;}
@@ -228,15 +243,21 @@
 <body>
 
 <!-- =================== BARRA SUPERIOR =================== -->
-<nav class="site-nav" style="display: flex; justify-content: center; align-items: center; width: 100%; padding: 10px 0; position: relative;">
-  <div class="nav-left"></div> 
-
-  <div class="nav-brand" id="brandSlot" style="display: flex; align-items: center; gap: 10px;">
-    <img id="navLogo" src="logo final deep empire bros amarillo.png" alt="Logo de la compañía" style="height: 40px; width: auto; display: block;">
+<nav class="site-nav">
+  <div class="nav-left">
+    <button type="button" class="nav-menu" aria-label="Menú"><span></span><span></span><span></span></button>
+  </div>
+  <div class="nav-brand" id="brandSlot" title="Clic para cargar el logo">
+    <img id="navLogo" alt="Logo de la compañía">
     <span class="eagle" id="navEagle">🦅</span>
-    <span class="brand-name" style="font-weight: bold;">DEEP EMPIRE BROS.</span>
+    <span class="brand-name">DEEP EMPIRE BROS.</span>
+    <span class="logo-hint">＋ Cargar logo</span>
+  </div>
+  <div class="nav-right">
+    <a class="nav-cta" href="#programar-consulta">Programar consulta</a>
   </div>
 </nav>
+<input type="file" id="logoInput" accept="image/*" style="display:none">
 
 <div class="wrap">
 
@@ -260,26 +281,39 @@
           <input type="text" id="razonSocial" placeholder="Ej. Comercializadora Andina S.A.S.">
         </div>
         <div class="field">
-          <label for="representante">Nombre del Representante</label>
-          <input type="text" id="representante" placeholder="Ej. María López · Gerente General">
+          <label for="nit">NIT</label>
+          <input type="text" id="nit" placeholder="Ej. 900.123.456-7">
         </div>
         <div class="field">
-          <label for="trabajadores">Número de Trabajadores</label>
-          <select id="trabajadores">
-            <option value="">Seleccione…</option>
-            <option value="Microoperación (1–10)">Microoperación (1–10)</option>
-            <option value="Pequeña (11–50)">Pequeña (11–50)</option>
-            <option value="Mediana (51–200)">Mediana (51–200)</option>
-            <option value="Grande (más de 200)">Grande (más de 200)</option>
-          </select>
+          <label for="anioConstitucion">Año de Constitución</label>
+          <input type="text" id="anioConstitucion" placeholder="Ej. 2015">
         </div>
         <div class="field">
-          <label for="visionInput">Visión / Objetivo estratégico <span class="hint">(opcional)</span></label>
-          <input type="text" id="visionInput" placeholder="Ej. Ser líder regional en 5 años">
+          <label for="entrevistado">Nombre del Entrevistado</label>
+          <input type="text" id="entrevistado" placeholder="Ej. María López · Gerente General">
+        </div>
+        <div class="field">
+          <label for="sedes">Número de Sedes</label>
+          <input type="text" id="sedes" placeholder="Ej. 3">
+        </div>
+        <div class="field">
+          <label>¿Pertenece a un Grupo Empresarial?</label>
+          <div class="radio-h" id="grupoWrap">
+            <label class="rh"><input type="radio" name="grupo" value="Sí"><span>Sí</span></label>
+            <label class="rh"><input type="radio" name="grupo" value="No"><span>No</span></label>
+          </div>
         </div>
         <div class="field full">
-          <label for="experiencia">Experiencia histórica de la empresa <span class="hint">(opcional)</span></label>
-          <textarea id="experiencia" placeholder="Trayectoria, hitos relevantes, contingencias enfrentadas…"></textarea>
+          <label for="facturacion">Facturación Anual Aproximada</label>
+          <div class="range-wrap">
+            <input type="range" id="facturacion" min="0" max="100000" step="100" value="1000">
+            <div class="range-val"><span id="facturacionVal"></span></div>
+            <div class="range-scale"><span>$0</span><span>$100.000 M COP +</span></div>
+          </div>
+        </div>
+        <div class="field full">
+          <label for="actividad">Actividad Económica o a qué se dedica la empresa</label>
+          <textarea id="actividad" placeholder="Describa la actividad económica principal, productos/servicios y sector…"></textarea>
         </div>
       </div>
     </section>
@@ -328,19 +362,16 @@
   </div>
 
   <!-- =================== REPORT VIEW =================== -->
- <div id="report">
-  <header class="report-masthead" style="background-color: #000000; padding: 20px; border-radius: 8px;">
-    
-    <div id="reportLogoWrap" style="display: flex; justify-content: center; margin-bottom: 24px;">
-      <img id="reportLogo" src="LOGO.png" alt="DEEP EMPIRE BROS." style="height: 60px; width: auto; object-fit: contain;">
-    </div>
-    
-    <p class="report-eyebrow" style="color: #cccccc; text-align: center;">Reporte de Diagnóstico Preliminar</p>
-    <h1 id="rTitulo" style="color: #ffffff; text-align: center;">Diagnóstico Estratégico Empresarial</h1>
-    <div class="co" id="rSubtitulo"></div>
-    <div class="module-badge" id="rModuleBadge"></div>
-  </header>
-</div>
+  <div id="report">
+    <header class="report-masthead">
+      <div id="reportLogoWrap" style="display:none;margin-bottom:16px;">
+        <img id="reportLogo" alt="Logo de la compañía" style="height:44px;width:auto;object-fit:contain;">
+      </div>
+      <p class="report-eyebrow">Reporte de Diagnóstico Preliminar</p>
+      <h1 id="rTitulo">Diagnóstico Estratégico Empresarial</h1>
+      <div class="co" id="rSubtitulo"></div>
+      <div class="module-badge" id="rModuleBadge"></div>
+    </header>
 
     <div class="report-section">
       <h3>Resumen Ejecutivo</h3><div class="rs-rule"></div>
@@ -615,49 +646,46 @@ const MODULES = {
 /* =========================================================
    PERFILES POR PORCENTAJE
    ========================================================= */
-const PROFILES = [
+/* --- CORPORATIVO TRANSVERSAL (máx 70) --- */
+const PROFILES_CORP = [
   {
-    min:0, max:43, color:"#b23a34",
-    label:"Nivel de Riesgo · Crítico",
+    min:0, max:43, color:"#b23a34", label:"Nivel de Riesgo · Crítico",
     title:"Exposición Patrimonial Crítica y Desalineación Estructural",
-    diag:"La compañía presenta una severa vulnerabilidad por inobservancia normativa y total permeabilidad del velo corporativo. Existe una co-mezcla latente entre el riesgo operativo del negocio y el patrimonio personal de los accionistas (exposición a responsabilidad solidaria o ilimitada). La ausencia de políticas de cumplimiento e inexistencia de blindaje de activos inmateriales (marcas) sitúan a la sociedad en un escenario de inminente riesgo sancionatorio por entes de supervisión y control (Supersociedades / SIC) y contingencias de alto impacto por pasivos laborales reales encubiertos bajo la modalidad de prestación de servicios o administración delegada defectuosa.",
+    diag:"La compañía presenta una severa vulnerabilidad por inobservancia normativa y total permeabilidad del velo corporativo. Existe una co-mezcla latente entre el riesgo operativo del negocio y el patrimonio personal de los accionistas (exposición a responsabilidad solidaria o ilimitada). La ausencia de políticas de cumplimiento normativo y la inexistencia de blindaje de activos inmateriales (marcas o know-how) sitúan a la sociedad en un escenario de inminente riesgo sancionatorio por entes de supervisión y control (Supersociedades / SIC) y contingencias de alto impacto por pasivos reales encubiertos o ineficiencia de control de caja.",
     measuresLabel:"Medidas Legales e Inmediatas a Implementar",
     measures:[
-      "Implementación urgente de un Plan de Remediación y Due Diligence Legal/Fiscal integral.",
-      "Segregación patrimonial inmediata y reestructuración societaria básica para el aislamiento del riesgo operativo.",
-      "Adopción e implementación de Manuales de Cumplimiento Obligatorio (SAGRILAFT/PTEE) y actualización estricta del Reglamento Interno de Trabajo (RIT) para mitigar el riesgo de contratos realidad.",
-      "Inicio inmediato del trámite de registro marcario ante la SIC para salvaguardar el goodwill y los activos intangibles de la sociedad."
+      "Implementación urgente de un Plan de Remediación y Due Diligence integral corporativo.",
+      "Segregación patrimonial inmediata y reestructuración societaria básica para el aislamiento del riesgo operativo de la empresa comercial.",
+      "Adopción e implementación de Manuales de Cumplimiento Obligatorio y actualización estricta del Reglamento Interno de Trabajo para mitigar el riesgo de contratos realidad.",
+      "Inicio inmediato del trámite de registro marcario ante la SIC para salvaguardar el goodwill y activos intangibles de la sociedad."
     ]
   },
   {
-    min:44, max:67, color:"#b98900",
-    label:"Nivel de Riesgo · Moderado",
+    min:44, max:67, color:"#b98900", label:"Nivel de Riesgo · Moderado",
     title:"Estructura Operativa Reactiva y Desacople de Control Preventivo",
-    diag:"Organización en etapa de tracción comercial que opera bajo un modelo de mitigación reactiva (\"administración por crisis\"). El principal foco de riesgo es la 'Gerencia-dependencia' y la ausencia de un Gobierno Corporativo formalizado (estatutos genéricos sin acuerdos de accionistas robustos), lo que eleva el riesgo de parálisis corporativa ante disensos societarios o eventos sucesorios. Financieramente, existe un desacople entre la contabilidad de causación/devengo fiscal y la toma de decisiones estratégicas, sumado a una exposición moderada a requerimientos territoriales por indebida determinación de la sujeción pasiva en el Impuesto de Industria y Comercio (ICA) municipal.",
+    diag:"Organización en etapa de tracción comercial que opera bajo un modelo de mitigación reactiva (\"administración por crisis\"). El principal foco de riesgo es la 'Gerencia-dependencia' y la ausencia de un Gobierno Corporativo formalizado (estatutos genéricos sin acuerdos de accionistas robustos), lo que eleva el riesgo de parálisis corporativa ante disensos societarios o eventos sucesorios. Financieramente, existe un desacople entre la contabilidad de causación fiscal y la toma de decisiones estratégicas basadas en analítica avanzada, limitando la previsibilidad financiera.",
     measuresLabel:"Medidas Legales e Inmediatas a Implementar",
     measures:[
-      "Redacción e implementación de un Acuerdo de Accionistas (Prenda de Socios) vinculante con cláusulas de salida, tag-along/drag-along y resolución de conflictos internos.",
-      "Institucionalización de la compañía mediante manuales de funciones corporativas, delegación de autoridad y establecimiento de KPIs por áreas.",
-      "Auditoría preventiva de territorialidad del ICA y conciliación fiscal para optimizar de forma lícita la tasa efectiva de tributación (ETR).",
-      "Formalización preventiva de la contratación comercial con proveedores y clientes mediante contratos tipo con cláusulas blindadas de limitación de responsabilidad y penalidades indexadas."
+      "Redacción e implementación de un Acuerdo de Accionistas vinculante con cláusulas de salida, tag-along/drag-along y resolución de conflictos internos.",
+      "Institucionalización de la compañía mediante manuales de funciones corporativas, delegación de autoridad y estructuración de mandos medios.",
+      "Auditoría preventiva de territorialidad de tributos municipales (ICA) y conciliación fiscal para optimizar la tasa efectiva de tributación (ETR).",
+      "Formalización preventiva de la contratación comercial mediante minutas tipo con cláusulas blindadas de limitación de responsabilidad y penalidades indexadas."
     ]
   },
   {
-    min:68, max:89, color:"#2f6f9e",
-    label:"Nivel de Riesgo · Optimizable",
+    min:68, max:89, color:"#2f6f9e", label:"Nivel de Riesgo · Optimizable",
     title:"Madurez Estructural con Coste de Oportunidad Financiera y Patrimonial",
-    diag:"La sociedad evidencia un adecuado estándar de cumplimiento normativo y orden legal interno aceptable. No obstante, se identifica una suboptimización del capital y un elevado coste de oportunidad en la gestión de tesorería (excedentes líquidos ociosos en cuentas operativas corrientes expuestos a la erosión inflacionaria). Asimismo, el patrimonio acumulado carece de un vehículo de aislamiento de riesgos de segunda generación (desprotección del holding de inversión), manteniendo expuestas las utilidades retenidas e históricas ante contingencias extraordinarias de la operación comercial principal de la empresa.",
+    diag:"La sociedad evidencia un adecuado estándar de cumplimiento normativo y orden legal interno aceptable. No obstante, se identifica una suboptimización del capital y un elevado coste de oportunidad en la gestión de tesorería (excedentes líquidos ociosos en cuentas operativas corrientes expuestos a la erosión inflacionaria). Asimismo, el patrimonio acumulado carece de un vehículo de aislamiento de riesgos de segunda generación (desprotección del holding de inversión), manteniendo expuestas las utilidades retenidas e históricas ante contingencias extraordinarias de la operación comercial principal.",
     measuresLabel:"Medidas Legales y Medidas Avanzadas a Implementar",
     measures:[
-      "Arquitectura Corporativa de Segunda Generación: planificación e implementación de una estructura de Holding Empresarial mediante la reorganización por intercambio de acciones o segregación, para centralizar la propiedad y mitigar riesgos cruzados entre unidades de negocio.",
-      "Mecanismos de Aislamiento Patrimonial: constitución de patrimonios autónomos a través de Contratos de Fiducia Mercantil de Administración y Protección Patrimonial, aislando activos fijos e inmuebles core del riesgo operativo comercial.",
-      "Ingeniería Jurídico-Fiscal de Excedentes: implementación de esquemas lícitos de capitalización de utilidades retenidas y optimización de la tasa efectiva mediante dividendos, estructurando políticas corporativas de inversión en vehículos financieros regulados que protejan la caja de la pérdida de valor adquisitivo.",
-      "Planificación Sucesoria Estructurada: elaboración conjunta de un Protocolo de Familia y un Fideicomiso Civil Sucesorio para garantizar la continuidad del negocio y la transferencia ordenada del patrimonio sin necesidad de procesos de sucesión judiciales."
+      "Arquitectura Corporativa de Segunda Generación: Planificación e implementación de una estructura de Holding Empresarial para centralizar la propiedad y mitigar riesgos cruzados entre unidades de negocio.",
+      "Mecanismos de Aislamiento Patrimonial: Constitución de patrimonios autónomos a través de Contratos de Fiducia Mercantil de Administración y Protección Patrimonial, aislando activos fijos e inmuebles core del riesgo operativo comercial.",
+      "Ingeniería Jurídico-Fiscal de Excedentes: Implementación de esquemas lícitos de capitalización de utilidades retenidas y optimización de la tasa efectiva mediante dividendos, estructurando políticas corporativas de inversión en vehículos financieros regulados que protejan la caja de la pérdida de valor adquisitivo.",
+      "Planificación Sucesoria Estructurada: Elaboración conjunta de un Protocolo de Familia y un Fideicomiso Civil Sucesorio para garantizar la continuidad del negocio y la transferencia ordenada del patrimonio sin necesidad de procesos de sucesión judiciales."
     ]
   },
   {
-    min:90, max:100, color:"#2f7d5b",
-    label:"Nivel de Riesgo · Sólido",
+    min:90, max:100, color:"#2f7d5b", label:"Nivel de Riesgo · Sólido",
     title:"Sólido Blindaje Corporativo y Eficiencia Estructural Superior",
     diag:"La compañía opera bajo los más altos estándares de Gobierno Corporativo, Gestión de Riesgos y Eficiencia Financiera. Cuenta con un ecosistema robusto de prevención de contingencias (Compliance al día, marcas protegidas, contratos realidad mitigados) y un control estricto de sus márgenes de utilidad netos. El riesgo de afectación patrimonial es mínimo gracias a la correcta delimitación de responsabilidades y segregación de activos estructurales.",
     measuresLabel:"Medidas Legales e Inmediatas a Implementar",
@@ -668,6 +696,114 @@ const PROFILES = [
     ]
   }
 ];
+
+/* --- DIAGNÓSTICO LEGAL (máx 50) --- */
+const PROFILES_LEGAL = [
+  {
+    min:0, max:43, color:"#b23a34", label:"Nivel de Riesgo · Crítico",
+    title:"Exposición Jurídica Crítica y Riesgo de Infracción Regulatoria",
+    diag:"Escenario de alta vulnerabilidad legal e inobservancia del régimen de responsabilidad corporativa en Colombia. La inactividad estatutaria y la total carencia de contratos estructurados sitúan la operación mercantil en una zona de alta contingencia de litigios civiles y comerciales sin mecanismos de defensa previos. La ausencia de un velo corporativo robusto expone de forma inminente el patrimonio privado de los socios a reclamaciones de terceros y responsabilidades del Artículo 2353 del Código Civil y normas comerciales concordantes.",
+    measuresLabel:"Medidas Legales Inmediatas a Implementar",
+    measures:[
+      "Auditoría forense legal exprés para identificar riesgos contractuales vigentes con clientes clave.",
+      "Trámite prioritario de registro de signos distintivos y marcas de la compañía ante la SIC.",
+      "Adopción de actas de asamblea extraordinarias para subsanar y actualizar estatutos sociales base.",
+      "Implementación de cláusulas de indemnidad y penalidades en las relaciones contractuales con proveedores operativos."
+    ]
+  },
+  {
+    min:44, max:67, color:"#b98900", label:"Nivel de Riesgo · Moderado",
+    title:"Vulnerabilidad por Gestión Reactiva y Debilidad en Gobierno Corporativo",
+    diag:"La sociedad opera bajo un esquema de seguridad jurídica aparente, gestionando los riesgos legales de manera reactiva (atendiendo litigios solo cuando estallan). Existe un vacío sustancial en el gobierno corporativo debido a la falta de acuerdos de accionistas que regulen bloqueos o sucesiones de cuotas, lo que amenaza la continuidad de la empresa ante disensos. Las relaciones comerciales están parcialmente documentadas, dejando brechas interpretativas que pueden derivar en reclamaciones contractuales por imprevistos.",
+    measuresLabel:"Medidas Legales Inmediatas a Implementar",
+    measures:[
+      "Estructuración y firma de un Acuerdo de Accionistas vinculante con cláusulas de bloqueo y resolución de disputas.",
+      "Estandarización y diseño de un portafolio de minutas contractuales blindadas para el área comercial.",
+      "Capacitación ejecutiva sobre responsabilidades penales de administradores y blindaje de juntas directivas.",
+      "Revisión y actualización de las pólizas de responsabilidad civil de administradores y directores (D&O)."
+    ]
+  },
+  {
+    min:68, max:89, color:"#2f6f9e", label:"Nivel de Riesgo · Optimizable",
+    title:"Estructura Legal Madura con Riesgos de Continuidad de Segunda Generación",
+    diag:"La compañía evidencia un adecuado estándar de formalización documental, con marcas registradas y contratos estructurados vigentes. No obstante, se identifica un estancamiento en la arquitectura jurídica preventiva de alta sofisticación. El patrimonio de la sociedad y sus activos core inmuebles o intangibles coexisten directamente con el riesgo comercial diario del negocio operativo, denotando la necesidad de esquemas corporativos avanzados de segregación que mitiguen responsabilidades cruzadas.",
+    measuresLabel:"Medidas Legales Avanzadas a Implementar",
+    measures:[
+      "Diseño e implementación de una reorganización societaria mediante escisión o segregación para aislar activos core de la operación.",
+      "Creación de estructuras societarias accesorias (Holdings) para mitigar riesgos de consolidación y optimizar la gobernanza corporativa.",
+      "Planificación legal sucesoria a nivel de socios mediante el diseño de Protocolos de Familia o fideicomisos civiles.",
+      "Implementación preventiva de auditorías de compliance y mantenimiento regular de matrices de riesgo legal."
+    ]
+  },
+  {
+    min:90, max:100, color:"#2f7d5b", label:"Nivel de Riesgo · Sólido",
+    title:"Blindaje Jurídico Óptimo y Cumplimiento Normativo de Vanguardia",
+    diag:"Máximo nivel de blindaje legal. La compañía cuenta con estatutos actualizados, acuerdos de socios operativos y protección absoluta de activos inmateriales. El velo corporativo se encuentra sólidamente estructurado, reduciendo a niveles mínimos la responsabilidad directa de administradores y socios ante reclamaciones comerciales ordinarias.",
+    measuresLabel:"Medidas Legales Inmediatas a Implementar",
+    measures:[
+      "Monitorización constante de cambios legislativos del entorno laboral, tributario y de derecho de consumo en Colombia.",
+      "Auditorías periódicas de renovación y vigencia marcaria a nivel nacional o internacional (si aplica).",
+      "Mantenimiento predictivo de actas y registros documentales en el libro de accionistas mercantil."
+    ]
+  }
+];
+
+/* --- DIAGNÓSTICO FINANCIERO (máx 50) --- */
+const PROFILES_FIN = [
+  {
+    min:0, max:43, color:"#b23a34", label:"Nivel de Riesgo · Crítico",
+    title:"Inestabilidad de Estructura Financiera y Alta Concentración de Riesgo de Caja",
+    diag:"La sociedad se encuentra en un estado crítico de exposición financiera caracterizado por la toma de decisiones intuitivas y una total ausencia de modelos cuantitativos. No existe claridad metodológica sobre el costeo real de los servicios o proyectos, lo que distorsiona el margen neto real de la operación. Existe una inmovilización ineficiente de los recursos de caja frente a la pérdida de poder adquisitivo (inflación), sumado a una total co-mezcla del patrimonio familiar y corporativo, arriesgando la subsistencia de los socios ante crisis de liquidez operativas.",
+    measuresLabel:"Medidas Financieras Inmediatas a Implementar",
+    measures:[
+      "Implementación prioritaria de una metodología técnica de costeo por líneas de negocio (ABC o marginal).",
+      "Migración inmediata de fondos ociosos de cuentas corrientes operativas a vehículos financieros líquidos de corto plazo.",
+      "Determinación urgente del Punto de Equilibrio real y proyección de flujo de caja para los próximos 6 meses.",
+      "Separación bancaria estricta de cuentas personales de socios frente a las cuentas corporativas operativas del negocio."
+    ]
+  },
+  {
+    min:44, max:67, color:"#b98900", label:"Nivel de Riesgo · Moderado",
+    title:"Operación con Desacople de Control Preventivo y Suboptimización de Caja",
+    diag:"Compañía con buena facturación e ingresos brutos estables, pero que adolece de controles predictivos y tableros de control financieros eficientes. Los riesgos financieros se gestionan de manera reactiva, respondiendo a las tensiones de tesorería a medida que se presentan. Existe un desconocimiento del valor técnico real del negocio al no poseer valoraciones financieras, lo que resta capacidad de apalancamiento estratégico o poder de negociación ante el sistema bancario.",
+    measuresLabel:"Medidas Financieras Inmediatas a Implementar",
+    measures:[
+      "Diseño e implementación de un modelo de Proyección Financiera dinámico y un tablero de control de KPIs (Dashboard de liquidez).",
+      "Ejecución de un proceso de valoración financiera técnica del negocio para fijar la base de valor corporativo.",
+      "Estructuración de políticas de endeudamiento corporativo eficiente para mitigar sobrecostos financieros en tasas bancarias.",
+      "Diseño y puesta en marcha de un fondo de reserva para contingencias operativas equivalentes a 3 meses de costes fijos."
+    ]
+  },
+  {
+    min:68, max:89, color:"#2f6f9e", label:"Nivel de Riesgo · Optimizable",
+    title:"Madurez Financiera con Coste de Oportunidad de Capital y Patrimonio Expuesto",
+    diag:"La organización presenta márgenes netos saludables y decisiones respaldadas en analítica financiera interna. No obstante, se detecta una importante suboptimización patrimonial de segunda generación. Los excedentes de liquidez corporativa no están asignados eficientemente bajo políticas corporativas macro de inversión que potencien el rendimiento del capital retenido. Adicionalmente, la riqueza consolidada de los socios se encuentra amarrada de manera exclusiva al éxito operativo de la empresa de comercio principal, sin estrategias de diversificación externa o protección fiduciaria.",
+    measuresLabel:"Medidas Financieras Avanzadas a Implementar",
+    measures:[
+      "Diseño e implementación de una Política Corporativa de Inversión Financiera Avanzada para excedentes retenidos.",
+      "Constitución de fideicomisos mercantiles o patrimonios autónomos fiduciarios de administración para aislar la caja de reserva del riesgo comercial.",
+      "Diseño de un plan financiero de diversificación patrimonial para socios mediante la extracción regulada y lícita de dividendos hacia activos refugio.",
+      "Estructuración e ingeniería fiscal corporativa enfocada en optimizar de forma lícita la tasa efectiva de tributación global (ETR)."
+    ]
+  },
+  {
+    min:90, max:100, color:"#2f7d5b", label:"Nivel de Riesgo · Sólido",
+    title:"Eficiencia Financiera Superior y Blindaje Patrimonial Consolidado",
+    diag:"Máximo nivel de madurez financiera. La empresa maximiza el valor del dinero mediante políticas de inversión de excedentes estructuradas y control analítico en tiempo real de la rentabilidad por proyectos. Los socios poseen un ecosistema diversificado e independiente que aísla de forma efectiva su patrimonio personal del riesgo del vehículo comercial operativo.",
+    measuresLabel:"Medidas Financieras Inmediatas a Implementar",
+    measures:[
+      "Auditorías financieras de mantenimiento regular y optimización periódica de portafolios de inversión corporativos.",
+      "Stress-testing predictivo anual del flujo de caja ante escenarios macroeconómicos nacionales adversos simulados.",
+      "Monitoreo proactivo de la volatilidad cambiaria o de tasas de interés del mercado para coberturas eficientes (Co-coberturas)."
+    ]
+  }
+];
+
+const PROFILES_BY_MODULE = {
+  legal:       PROFILES_LEGAL,
+  financiero:  PROFILES_FIN,
+  corporativo: PROFILES_CORP,
+};
 
 /* =========================================================
    RENDER DE MÓDULOS
@@ -732,17 +868,22 @@ document.querySelectorAll('#tabs .tab').forEach(tab=>{
 document.getElementById('btnGenerar').addEventListener('click', ()=>{
   const errBox = document.getElementById('formError');
   const razonSocial = document.getElementById('razonSocial').value.trim();
-  const representante = document.getElementById('representante').value.trim();
-  const trabajadores = document.getElementById('trabajadores').value;
-  const vision = document.getElementById('visionInput').value.trim();
-  const experiencia = document.getElementById('experiencia').value.trim();
+  const nit = document.getElementById('nit').value.trim();
+  const anioConstitucion = document.getElementById('anioConstitucion').value.trim();
+  const entrevistado = document.getElementById('entrevistado').value.trim();
+  const sedes = document.getElementById('sedes').value.trim();
+  const grupoEl = document.querySelector('input[name="grupo"]:checked');
+  const grupo = grupoEl ? grupoEl.value : '';
+  const facturacionRaw = parseInt(document.getElementById('facturacion').value, 10);
+  const facturacion = formatMillones(facturacionRaw);
+  const actividad = document.getElementById('actividad').value.trim();
 
   const mod = MODULES[activeModule];
 
   const missing = [];
   if(!razonSocial) missing.push('Razón Social');
-  if(!representante) missing.push('Nombre del Representante');
-  if(!trabajadores) missing.push('Número de Trabajadores');
+  if(!nit) missing.push('NIT');
+  if(!entrevistado) missing.push('Nombre del Entrevistado');
 
   const unanswered = mod.questions.filter(q => !document.querySelector('input[name="'+activeModule+'_'+q.id+'"]:checked'));
 
